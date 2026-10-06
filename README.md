@@ -1,36 +1,101 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sonora
 
-## Getting Started
+Aplicação web em Next.js para gerenciamento de alunos, períodos, aulas e acompanhamento de progresso musical. O projeto já está integrado ao Supabase e substituiu os mocks por leitura e gravação reais no banco.
 
-First, run the development server:
+## Visão geral
+
+O fluxo atual cobre três áreas principais:
+
+- Cadastro e listagem de períodos, com criação do período e de suas aulas no mesmo fluxo.
+- Cadastro e listagem de alunos, vinculando cada aluno a um período e criando a matrícula e as aulas pendentes automaticamente.
+- Página de detalhe do aluno, com atualização de nota e confirmação de aulas concluídas.
+
+## Stack
+
+- Next.js 16 com App Router
+- React 19
+- TypeScript
+- Tailwind CSS v4
+- Supabase (`@supabase/supabase-js`)
+
+## Estrutura principal
+
+- `src/app` - rotas e Server Actions
+- `src/components` - componentes de interface reutilizáveis
+- `src/lib` - acesso aos dados e cliente do Supabase
+
+## Rotas
+
+- `/` - página inicial com atalhos para alunos e períodos
+- `/periodos` - listagem e cadastro de períodos
+- `/alunos` - listagem e cadastro de alunos
+- `/alunos/[id]` - detalhe de uma matrícula de aluno, com nota e progresso por aula
+
+## Funcionalidades
+
+### Períodos
+
+- Lista os períodos cadastrados no banco.
+- Permite criar um período e, no mesmo fluxo, cadastrar as aulas dele.
+- Exibe as aulas de cada período na listagem.
+
+### Alunos
+
+- Lista matrículas com nome, instrumento, período, nota e progresso.
+- Permite cadastrar um aluno escolhendo um período existente.
+- Cria automaticamente o aluno, a matrícula e os registros de aulas da matrícula com `concluida = false`.
+
+### Detalhe do aluno
+
+- Exibe nome, instrumento, período e barra de progresso.
+- Permite salvar a nota da matrícula.
+- Permite marcar/desmarcar aulas como concluídas com confirmação.
+
+## Banco de dados
+
+O projeto foi pensado para esta estrutura de tabelas no Supabase:
+
+- `periodos` - períodos cadastrados
+- `aulas` - aulas vinculadas a um período
+- `alunos` - dados base do aluno
+- `matriculas` - vínculo entre aluno e período, com nota
+- `aula_matricula` - vínculo entre matrícula e aula, com status de conclusão
+
+### Observação importante sobre segurança
+
+Hoje o app usa a chave anônima do Supabase no cliente. Isso exige RLS e políticas corretas no banco. Sem isso, qualquer pessoa com acesso ao front-end pode consultar e alterar dados diretamente via API do Supabase.
+
+## Variáveis de ambiente
+
+Crie um arquivo `.env.local` na raiz com estas chaves:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Instalação e execução
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm install
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Abra [http://localhost:3000](http://localhost:3000) no navegador.
 
-## Learn More
+## Scripts
 
-To learn more about Next.js, take a look at the following resources:
+- `npm run dev` - inicia o ambiente de desenvolvimento
+- `npm run build` - gera a build de produção
+- `npm run start` - executa a build gerada
+- `npm run lint` - roda o ESLint
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Validação
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+O projeto foi ajustado para passar em `tsc --noEmit` e `npm run lint`.
 
-## Deploy on Vercel
+## Observações
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- O login ainda não está implementado.
+- O botão de sair no header é apenas visual por enquanto.
+- O comportamento do app depende de o Supabase estar com RLS/policies configuradas corretamente para leitura e escrita.
