@@ -62,6 +62,7 @@ export function NovoPeriodoModal({
     event.preventDefault();
     const aulas: Aula[] = rascunhoAulas.map((aula) => ({
       ...aula,
+      id: crypto.randomUUID(),
       nomePeriodo: nomePeriodo.trim(),
     }));
     onSave(aulas);

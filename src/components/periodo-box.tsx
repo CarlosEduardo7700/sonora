@@ -20,7 +20,7 @@ export function PeriodoBox({ nomePeriodo, aulas }: PeriodoBoxProps) {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {aulas.map((aula) => (
           <div
-            key={aula.numeroAula}
+            key={aula.id}
             className="flex items-center gap-3 rounded-md border border-border bg-muted p-4"
           >
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
