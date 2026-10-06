@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import type { Aula } from "@/data/aulas";
 import { Modal } from "@/components/modal";
+import { createPeriodoComAulas } from "@/app/periodos/actions";
+import type { PeriodoComAulas } from "@/lib/periodos";
 
 type RascunhoAula = {
   numeroAula: number;
@@ -12,7 +13,7 @@ type RascunhoAula = {
 type NovoPeriodoModalProps = {
   open: boolean;
   onClose: () => void;
-  onSave: (aulas: Aula[]) => void;
+  onCreated: (periodo: PeriodoComAulas) => void;
 };
 
 const inputClassName =
@@ -21,18 +22,21 @@ const inputClassName =
 export function NovoPeriodoModal({
   open,
   onClose,
-  onSave,
+  onCreated,
 }: NovoPeriodoModalProps) {
   const [etapa, setEtapa] = useState<"dados" | "aulas">("dados");
   const [quantidadeAulas, setQuantidadeAulas] = useState("");
   const [nomePeriodo, setNomePeriodo] = useState("");
   const [rascunhoAulas, setRascunhoAulas] = useState<RascunhoAula[]>([]);
+  const [enviando, setEnviando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
 
   function resetAndClose() {
     setEtapa("dados");
     setQuantidadeAulas("");
     setNomePeriodo("");
     setRascunhoAulas([]);
+    setErro(null);
     onClose();
   }
 
@@ -58,15 +62,28 @@ export function NovoPeriodoModal({
     );
   }
 
-  function handleSalvar(event: React.FormEvent) {
+  async function handleSalvar(event: React.FormEvent) {
     event.preventDefault();
-    const aulas: Aula[] = rascunhoAulas.map((aula) => ({
-      ...aula,
-      id: crypto.randomUUID(),
-      nomePeriodo: nomePeriodo.trim(),
-    }));
-    onSave(aulas);
-    resetAndClose();
+
+    setEnviando(true);
+    setErro(null);
+    try {
+      const periodo = await createPeriodoComAulas(
+        nomePeriodo,
+        rascunhoAulas.map((aula) => ({
+          numero_aula: aula.numeroAula,
+          tema: aula.temaAula,
+        }))
+      );
+      onCreated(periodo);
+      resetAndClose();
+    } catch (error) {
+      setErro(
+        error instanceof Error ? error.message : "Erro ao criar período"
+      );
+    } finally {
+      setEnviando(false);
+    }
   }
 
   return (
@@ -139,6 +156,7 @@ export function NovoPeriodoModal({
               </label>
             ))}
           </div>
+          {erro && <p className="text-sm text-red-600">{erro}</p>}
           <div className="mt-2 flex justify-end gap-2">
             <button
               type="button"
@@ -149,9 +167,10 @@ export function NovoPeriodoModal({
             </button>
             <button
               type="submit"
-              className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
+              disabled={enviando}
+              className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60"
             >
-              Salvar
+              {enviando ? "Salvando..." : "Salvar"}
             </button>
           </div>
         </form>

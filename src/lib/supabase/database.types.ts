@@ -15,6 +15,7 @@ export type Database = {
           id?: string;
           nome?: string;
         };
+        Relationships: [];
       };
       alunos: {
         Row: {
@@ -32,6 +33,7 @@ export type Database = {
           nome?: string;
           instrumento?: string;
         };
+        Relationships: [];
       };
       matriculas: {
         Row: {
@@ -52,6 +54,22 @@ export type Database = {
           periodo_id?: string;
           nota?: number | null;
         };
+        Relationships: [
+          {
+            foreignKeyName: "matriculas_aluno_id_fkey";
+            columns: ["aluno_id"];
+            isOneToOne: false;
+            referencedRelation: "alunos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "matriculas_periodo_id_fkey";
+            columns: ["periodo_id"];
+            isOneToOne: false;
+            referencedRelation: "periodos";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       aulas: {
         Row: {
@@ -72,6 +90,15 @@ export type Database = {
           tema?: string;
           periodo_id?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "aulas_periodo_id_fkey";
+            columns: ["periodo_id"];
+            isOneToOne: false;
+            referencedRelation: "periodos";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       aula_matricula: {
         Row: {
@@ -92,7 +119,25 @@ export type Database = {
           aula_id?: string;
           concluida?: boolean;
         };
+        Relationships: [
+          {
+            foreignKeyName: "aula_matricula_matricula_id_fkey";
+            columns: ["matricula_id"];
+            isOneToOne: false;
+            referencedRelation: "matriculas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "aula_matricula_aula_id_fkey";
+            columns: ["aula_id"];
+            isOneToOne: false;
+            referencedRelation: "aulas";
+            referencedColumns: ["id"];
+          },
+        ];
       };
     };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
   };
 };
