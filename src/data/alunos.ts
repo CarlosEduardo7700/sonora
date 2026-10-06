@@ -6,6 +6,8 @@ export type Aluno = {
   nomePeriodo: string;
   // ids das Aula já concluídas pelo aluno dentro do período
   aulasConcluidasIds: string[];
+  // nota do aluno no período (0 a 10), null quando ainda não lançada
+  nota: number | null;
 };
 
 export const alunosMock: Aluno[] = [
@@ -15,6 +17,7 @@ export const alunosMock: Aluno[] = [
     instrumento: "Violão",
     nomePeriodo: "S1/2027",
     aulasConcluidasIds: ["aula-1", "aula-2"],
+    nota: 8.5,
   },
   {
     id: "aluno-2",
@@ -22,6 +25,7 @@ export const alunosMock: Aluno[] = [
     instrumento: "Piano",
     nomePeriodo: "S1/2027",
     aulasConcluidasIds: ["aula-1"],
+    nota: null,
   },
   {
     id: "aluno-3",
@@ -29,6 +33,7 @@ export const alunosMock: Aluno[] = [
     instrumento: "Violino",
     nomePeriodo: "S2/2027",
     aulasConcluidasIds: [],
+    nota: null,
   },
   {
     id: "aluno-4",
@@ -36,5 +41,7 @@ export const alunosMock: Aluno[] = [
     instrumento: "Bateria",
     nomePeriodo: "S2/2027",
     aulasConcluidasIds: ["aula-5", "aula-6", "aula-7"],
+    nota: 9.2,
   },
 ];
+

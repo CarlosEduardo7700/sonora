@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Aluno } from "@/data/alunos";
 import { ProgressBar } from "@/components/progress-bar";
 
@@ -22,12 +23,12 @@ export function AlunoCard({ aluno, totalAulas, aulasConcluidas }: AlunoCardProps
             {aluno.instrumento} · {aluno.nomePeriodo}
           </p>
         </div>
-        <button
-          type="button"
+        <Link
+          href={`/alunos/${aluno.id}`}
           className="shrink-0 rounded-full border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary"
         >
           Ver mais
-        </button>
+        </Link>
       </div>
 
       <ProgressBar
