@@ -1,20 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import type { Aluno } from "@/data/alunos";
-import type { Aula } from "@/data/aulas";
+import type { MatriculaComProgresso } from "@/lib/matriculas";
+import type { Periodo } from "@/lib/periodos";
 import { AlunoCard } from "@/components/aluno-card";
 import { NovoAlunoModal } from "@/components/novo-aluno-modal";
 
 type AlunosClientProps = {
-  alunosIniciais: Aluno[];
-  aulas: Aula[];
-  periodosDisponiveis: string[];
+  alunosIniciais: MatriculaComProgresso[];
+  periodosDisponiveis: Periodo[];
 };
 
 export function AlunosClient({
   alunosIniciais,
-  aulas,
   periodosDisponiveis,
 }: AlunosClientProps) {
   const [alunos, setAlunos] = useState(alunosIniciais);
@@ -36,26 +34,15 @@ export function AlunosClient({
       </div>
 
       <div className="flex flex-col gap-4">
-        {alunos.map((aluno) => {
-          const totalAulas = aulas.filter(
-            (aula) => aula.nomePeriodo === aluno.nomePeriodo
-          ).length;
-
-          return (
-            <AlunoCard
-              key={aluno.id}
-              aluno={aluno}
-              totalAulas={totalAulas}
-              aulasConcluidas={aluno.aulasConcluidasIds.length}
-            />
-          );
-        })}
+        {alunos.map((aluno) => (
+          <AlunoCard key={aluno.matriculaId} aluno={aluno} />
+        ))}
       </div>
 
       <NovoAlunoModal
         open={modalAberto}
         onClose={() => setModalAberto(false)}
-        onSave={(novoAluno) => setAlunos((prev) => [...prev, novoAluno])}
+        onCreated={(novoAluno) => setAlunos((prev) => [...prev, novoAluno])}
         periodosDisponiveis={periodosDisponiveis}
       />
     </>

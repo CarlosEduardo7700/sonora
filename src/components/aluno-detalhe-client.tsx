@@ -2,55 +2,80 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import type { Aluno } from "@/data/alunos";
-import type { Aula } from "@/data/aulas";
+import type { AulaDaMatricula, MatriculaDetalhe } from "@/lib/matriculas";
 import { ProgressBar } from "@/components/progress-bar";
 import { AulaCheckCard } from "@/components/aula-check-card";
 import { Modal } from "@/components/modal";
+import {
+  atualizarConclusaoAula,
+  atualizarNota,
+} from "@/app/alunos/[id]/actions";
 
 type AlunoDetalheClientProps = {
-  aluno: Aluno;
-  aulasDoPeriodo: Aula[];
+  matricula: MatriculaDetalhe;
 };
 
-export function AlunoDetalheClient({
-  aluno,
-  aulasDoPeriodo,
-}: AlunoDetalheClientProps) {
-  const [concluidasIds, setConcluidasIds] = useState(
-    aluno.aulasConcluidasIds
-  );
-  const [aulaSelecionada, setAulaSelecionada] = useState<Aula | null>(null);
-  const [nota, setNota] = useState(aluno.nota);
+export function AlunoDetalheClient({ matricula }: AlunoDetalheClientProps) {
+  const [aulas, setAulas] = useState(matricula.aulas);
+  const [aulaSelecionada, setAulaSelecionada] =
+    useState<AulaDaMatricula | null>(null);
+  const [nota, setNota] = useState(matricula.nota);
   const [notaDraft, setNotaDraft] = useState(
-    aluno.nota !== null ? String(aluno.nota) : ""
+    matricula.nota !== null ? String(matricula.nota) : ""
   );
+  const [salvandoAula, setSalvandoAula] = useState(false);
+  const [salvandoNota, setSalvandoNota] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
 
-  const totalAulas = aulasDoPeriodo.length;
-  const aulasConcluidas = concluidasIds.length;
+  const totalAulas = aulas.length;
+  const aulasConcluidas = aulas.filter((aula) => aula.concluida).length;
   const percentual =
     totalAulas > 0 ? Math.round((aulasConcluidas / totalAulas) * 100) : 0;
 
-  const aulaSelecionadaEstaConcluida =
-    aulaSelecionada !== null && concluidasIds.includes(aulaSelecionada.id);
-
-  function handleConfirmar() {
+  async function handleConfirmar() {
     if (!aulaSelecionada) return;
-    setConcluidasIds((prev) =>
-      prev.includes(aulaSelecionada.id)
-        ? prev.filter((id) => id !== aulaSelecionada.id)
-        : [...prev, aulaSelecionada.id]
-    );
-    setAulaSelecionada(null);
+    const novoEstado = !aulaSelecionada.concluida;
+
+    setSalvandoAula(true);
+    setErro(null);
+    try {
+      await atualizarConclusaoAula(
+        aulaSelecionada.aulaMatriculaId,
+        novoEstado,
+        matricula.matriculaId
+      );
+      setAulas((prev) =>
+        prev.map((aula) =>
+          aula.aulaId === aulaSelecionada.aulaId
+            ? { ...aula, concluida: novoEstado }
+            : aula
+        )
+      );
+      setAulaSelecionada(null);
+    } catch (error) {
+      setErro(error instanceof Error ? error.message : "Erro ao atualizar aula");
+    } finally {
+      setSalvandoAula(false);
+    }
   }
 
-  function handleSalvarNota(event: React.FormEvent) {
+  async function handleSalvarNota(event: React.FormEvent) {
     event.preventDefault();
     const valor = notaDraft.trim() === "" ? null : Number(notaDraft);
     if (valor !== null && (Number.isNaN(valor) || valor < 0 || valor > 10)) {
       return;
     }
-    setNota(valor);
+
+    setSalvandoNota(true);
+    setErro(null);
+    try {
+      await atualizarNota(matricula.matriculaId, valor);
+      setNota(valor);
+    } catch (error) {
+      setErro(error instanceof Error ? error.message : "Erro ao salvar nota");
+    } finally {
+      setSalvandoNota(false);
+    }
   }
 
   return (
@@ -64,10 +89,10 @@ export function AlunoDetalheClient({
 
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          {aluno.nomeAluno}
+          {matricula.nomeAluno}
         </h1>
         <p className="text-sm text-muted-foreground">
-          {aluno.instrumento} · {aluno.nomePeriodo}
+          {matricula.instrumento} · {matricula.nomePeriodo}
         </p>
       </div>
 
@@ -75,6 +100,8 @@ export function AlunoDetalheClient({
         value={percentual}
         label={`${aulasConcluidas} de ${totalAulas} aulas concluídas`}
       />
+
+      {erro && <p className="text-sm text-red-600">{erro}</p>}
 
       <form
         onSubmit={handleSalvarNota}
@@ -103,19 +130,19 @@ export function AlunoDetalheClient({
           />
           <button
             type="submit"
-            className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
+            disabled={salvandoNota}
+            className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60"
           >
-            Salvar nota
+            {salvandoNota ? "Salvando..." : "Salvar nota"}
           </button>
         </div>
       </form>
 
       <div className="flex flex-col gap-3">
-        {aulasDoPeriodo.map((aula) => (
+        {aulas.map((aula) => (
           <AulaCheckCard
-            key={aula.id}
+            key={aula.aulaId}
             aula={aula}
-            concluida={concluidasIds.includes(aula.id)}
             onToggle={() => setAulaSelecionada(aula)}
           />
         ))}
@@ -125,7 +152,7 @@ export function AlunoDetalheClient({
         open={aulaSelecionada !== null}
         onClose={() => setAulaSelecionada(null)}
         title={
-          aulaSelecionadaEstaConcluida
+          aulaSelecionada?.concluida
             ? "Remover check da aula?"
             : "O aluno concluiu a aula?"
         }
@@ -133,7 +160,7 @@ export function AlunoDetalheClient({
         {aulaSelecionada && (
           <div className="flex flex-col gap-4">
             <p className="text-sm text-muted-foreground">
-              Aula {aulaSelecionada.numeroAula} · {aulaSelecionada.temaAula}
+              Aula {aulaSelecionada.numeroAula} · {aulaSelecionada.tema}
             </p>
             <div className="flex justify-end gap-2">
               <button
@@ -146,9 +173,10 @@ export function AlunoDetalheClient({
               <button
                 type="button"
                 onClick={handleConfirmar}
-                className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
+                disabled={salvandoAula}
+                className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60"
               >
-                Confirmar
+                {salvandoAula ? "Salvando..." : "Confirmar"}
               </button>
             </div>
           </div>

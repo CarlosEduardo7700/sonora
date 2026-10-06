@@ -1,14 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import type { Aluno } from "@/data/alunos";
 import { Modal } from "@/components/modal";
+import { createAlunoComMatricula } from "@/app/alunos/actions";
+import type { MatriculaComProgresso } from "@/lib/matriculas";
+import type { Periodo } from "@/lib/periodos";
 
 type NovoAlunoModalProps = {
   open: boolean;
   onClose: () => void;
-  onSave: (aluno: Aluno) => void;
-  periodosDisponiveis: string[];
+  onCreated: (aluno: MatriculaComProgresso) => void;
+  periodosDisponiveis: Periodo[];
 };
 
 const inputClassName =
@@ -17,33 +19,42 @@ const inputClassName =
 export function NovoAlunoModal({
   open,
   onClose,
-  onSave,
+  onCreated,
   periodosDisponiveis,
 }: NovoAlunoModalProps) {
   const [nomeAluno, setNomeAluno] = useState("");
   const [instrumento, setInstrumento] = useState("");
-  const [nomePeriodo, setNomePeriodo] = useState("");
+  const [periodoId, setPeriodoId] = useState("");
+  const [enviando, setEnviando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
 
   function resetAndClose() {
     setNomeAluno("");
     setInstrumento("");
-    setNomePeriodo("");
+    setPeriodoId("");
+    setErro(null);
     onClose();
   }
 
-  function handleSalvar(event: React.FormEvent) {
+  async function handleSalvar(event: React.FormEvent) {
     event.preventDefault();
-    if (!nomeAluno.trim() || !instrumento.trim() || !nomePeriodo) return;
+    if (!nomeAluno.trim() || !instrumento.trim() || !periodoId) return;
 
-    onSave({
-      id: crypto.randomUUID(),
-      nomeAluno: nomeAluno.trim(),
-      instrumento: instrumento.trim(),
-      nomePeriodo,
-      aulasConcluidasIds: [],
-      nota: null,
-    });
-    resetAndClose();
+    setEnviando(true);
+    setErro(null);
+    try {
+      const aluno = await createAlunoComMatricula(
+        nomeAluno,
+        instrumento,
+        periodoId
+      );
+      onCreated(aluno);
+      resetAndClose();
+    } catch (error) {
+      setErro(error instanceof Error ? error.message : "Erro ao criar aluno");
+    } finally {
+      setEnviando(false);
+    }
   }
 
   return (
@@ -72,8 +83,8 @@ export function NovoAlunoModal({
         <label className="flex flex-col gap-1 text-sm font-medium text-foreground">
           Período
           <select
-            value={nomePeriodo}
-            onChange={(event) => setNomePeriodo(event.target.value)}
+            value={periodoId}
+            onChange={(event) => setPeriodoId(event.target.value)}
             required
             className={inputClassName}
           >
@@ -81,12 +92,13 @@ export function NovoAlunoModal({
               Selecione um período
             </option>
             {periodosDisponiveis.map((periodo) => (
-              <option key={periodo} value={periodo}>
-                {periodo}
+              <option key={periodo.id} value={periodo.id}>
+                {periodo.nome}
               </option>
             ))}
           </select>
         </label>
+        {erro && <p className="text-sm text-red-600">{erro}</p>}
         <div className="mt-2 flex justify-end gap-2">
           <button
             type="button"
@@ -97,9 +109,10 @@ export function NovoAlunoModal({
           </button>
           <button
             type="submit"
-            className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
+            disabled={enviando}
+            className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60"
           >
-            Salvar
+            {enviando ? "Salvando..." : "Salvar"}
           </button>
         </div>
       </form>
