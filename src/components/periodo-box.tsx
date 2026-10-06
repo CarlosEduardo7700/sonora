@@ -1,4 +1,4 @@
-import type { PeriodoComAulas } from "@/lib/periodos";
+import type { PeriodoComAulas } from "@/lib/supabase/queries/periodos";
 
 type PeriodoBoxProps = {
   periodo: PeriodoComAulas;

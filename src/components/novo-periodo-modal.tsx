@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Modal } from "@/components/modal";
 import { createPeriodoComAulas } from "@/app/periodos/actions";
-import type { PeriodoComAulas } from "@/lib/periodos";
+import type { PeriodoComAulas } from "@/lib/supabase/queries/periodos";
 
 type RascunhoAula = {
   numeroAula: number;
