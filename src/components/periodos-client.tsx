@@ -1,18 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import type { Aula } from "@/data/aulas";
+import type { PeriodoComAulas } from "@/lib/periodos";
 import { PeriodoBox } from "@/components/periodo-box";
 import { NovoPeriodoModal } from "@/components/novo-periodo-modal";
 
 type PeriodosClientProps = {
-  aulasIniciais: Aula[];
+  periodosIniciais: PeriodoComAulas[];
 };
 
-export function PeriodosClient({ aulasIniciais }: PeriodosClientProps) {
-  const [aulas, setAulas] = useState(aulasIniciais);
+export function PeriodosClient({ periodosIniciais }: PeriodosClientProps) {
+  const [periodos, setPeriodos] = useState(periodosIniciais);
   const [modalAberto, setModalAberto] = useState(false);
-  const periodos = Object.groupBy(aulas, (aula) => aula.nomePeriodo);
 
   return (
     <>
@@ -30,19 +29,15 @@ export function PeriodosClient({ aulasIniciais }: PeriodosClientProps) {
       </div>
 
       <div className="flex flex-col gap-6">
-        {Object.entries(periodos).map(([nomePeriodo, aulasDoPeriodo]) => (
-          <PeriodoBox
-            key={nomePeriodo}
-            nomePeriodo={nomePeriodo}
-            aulas={aulasDoPeriodo ?? []}
-          />
+        {periodos.map((periodo) => (
+          <PeriodoBox key={periodo.id} periodo={periodo} />
         ))}
       </div>
 
       <NovoPeriodoModal
         open={modalAberto}
         onClose={() => setModalAberto(false)}
-        onSave={(novasAulas) => setAulas((prev) => [...prev, ...novasAulas])}
+        onCreated={(periodo) => setPeriodos((prev) => [...prev, periodo])}
       />
     </>
   );

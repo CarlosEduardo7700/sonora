@@ -1,16 +1,16 @@
 import Link from "next/link";
-import type { Aluno } from "@/data/alunos";
+import type { MatriculaComProgresso } from "@/lib/matriculas";
 import { ProgressBar } from "@/components/progress-bar";
 
 type AlunoCardProps = {
-  aluno: Aluno;
-  totalAulas: number;
-  aulasConcluidas: number;
+  aluno: MatriculaComProgresso;
 };
 
-export function AlunoCard({ aluno, totalAulas, aulasConcluidas }: AlunoCardProps) {
+export function AlunoCard({ aluno }: AlunoCardProps) {
   const percentual =
-    totalAulas > 0 ? Math.round((aulasConcluidas / totalAulas) * 100) : 0;
+    aluno.totalAulas > 0
+      ? Math.round((aluno.aulasConcluidas / aluno.totalAulas) * 100)
+      : 0;
 
   return (
     <div className="flex flex-col gap-4 rounded-lg border border-border bg-card p-6 shadow-sm">
@@ -24,7 +24,7 @@ export function AlunoCard({ aluno, totalAulas, aulasConcluidas }: AlunoCardProps
           </p>
         </div>
         <Link
-          href={`/alunos/${aluno.id}`}
+          href={`/alunos/${aluno.matriculaId}`}
           className="shrink-0 rounded-full border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary"
         >
           Ver mais
@@ -33,7 +33,7 @@ export function AlunoCard({ aluno, totalAulas, aulasConcluidas }: AlunoCardProps
 
       <ProgressBar
         value={percentual}
-        label={`${aulasConcluidas} de ${totalAulas} aulas concluídas`}
+        label={`${aluno.aulasConcluidas} de ${aluno.totalAulas} aulas concluídas`}
       />
     </div>
   );
