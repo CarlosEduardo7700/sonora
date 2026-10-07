@@ -12,7 +12,7 @@ import { Modal } from "@/components/modal";
 import {
   atualizarConclusaoAula,
   atualizarNota,
-} from "@/app/alunos/[id]/actions";
+} from "@/app/(protected)/alunos/[id]/actions";
 
 type AlunoDetalheClientProps = {
   matricula: MatriculaDetalhe;
