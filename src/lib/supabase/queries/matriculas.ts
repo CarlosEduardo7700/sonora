@@ -1,6 +1,6 @@
-import { supabase } from "@/lib/supabase/client";
-import { getAlunos } from "@/lib/alunos";
-import { getPeriodos } from "@/lib/periodos";
+import { createClient } from "@/lib/supabase/server";
+import { getAlunos } from "@/lib/supabase/queries/alunos";
+import { getPeriodos } from "@/lib/supabase/queries/periodos";
 
 export type Matricula = {
   id: string;
@@ -41,6 +41,7 @@ export type MatriculaComProgresso = {
 };
 
 export async function getMatriculas(): Promise<Matricula[]> {
+  const supabase = await createClient();
   const { data, error } = await supabase.from("matriculas").select("*");
 
   if (error) {
@@ -53,6 +54,7 @@ export async function getMatriculas(): Promise<Matricula[]> {
 export async function getMatriculasComProgresso(): Promise<
   MatriculaComProgresso[]
 > {
+  const supabase = await createClient();
   const [matriculas, alunos, periodos, checksResult] = await Promise.all([
     getMatriculas(),
     getAlunos(),
@@ -95,6 +97,7 @@ export async function getMatriculasComProgresso(): Promise<
 export async function getMatriculaDetalhe(
   matriculaId: string
 ): Promise<MatriculaDetalhe | null> {
+  const supabase = await createClient();
   const { data: matricula, error: matriculaError } = await supabase
     .from("matriculas")
     .select("*")

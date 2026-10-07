@@ -1,14 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { supabase } from "@/lib/supabase/client";
-import type { MatriculaComProgresso } from "@/lib/matriculas";
+import { createClient } from "@/lib/supabase/server";
+import type { MatriculaComProgresso } from "@/lib/supabase/queries/matriculas";
 
 export async function createAlunoComMatricula(
   nome: string,
   instrumento: string,
   periodoId: string
 ): Promise<MatriculaComProgresso> {
+  const supabase = await createClient();
   const nomeTratado = nome.trim();
   const instrumentoTratado = instrumento.trim();
   if (!nomeTratado || !instrumentoTratado || !periodoId) {

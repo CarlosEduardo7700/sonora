@@ -1,4 +1,4 @@
-import type { AulaDaMatricula } from "@/lib/matriculas";
+import type { AulaDaMatricula } from "@/lib/supabase/queries/matriculas";
 
 type AulaCheckCardProps = {
   aula: AulaDaMatricula;

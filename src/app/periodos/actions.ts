@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/server";
 import type { PeriodoComAulas } from "@/lib/supabase/queries/periodos";
 
 type NovaAula = {
@@ -13,6 +13,7 @@ export async function createPeriodoComAulas(
   nome: string,
   aulas: NovaAula[]
 ): Promise<PeriodoComAulas> {
+  const supabase = await createClient();
   const nomeTratado = nome.trim();
   if (!nomeTratado) {
     throw new Error("Nome do período é obrigatório");

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { PeriodoComAulas } from "@/lib/periodos";
+import type { PeriodoComAulas } from "@/lib/supabase/queries/periodos";
 import { PeriodoBox } from "@/components/periodo-box";
 import { NovoPeriodoModal } from "@/components/novo-periodo-modal";
 

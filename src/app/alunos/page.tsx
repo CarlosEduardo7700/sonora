@@ -1,5 +1,5 @@
-import { getMatriculasComProgresso } from "@/lib/matriculas";
-import { getPeriodos } from "@/lib/periodos";
+import { getMatriculasComProgresso } from "@/lib/supabase/queries/matriculas";
+import { getPeriodos } from "@/lib/supabase/queries/periodos";
 import { AlunosClient } from "@/components/alunos-client";
 
 export default async function AlunosPage() {

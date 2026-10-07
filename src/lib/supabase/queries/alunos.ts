@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/server";
 
 export type Aluno = {
   id: string;
@@ -7,6 +7,7 @@ export type Aluno = {
 };
 
 export async function getAlunos(): Promise<Aluno[]> {
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("alunos")
     .select("*")

@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { Modal } from "@/components/modal";
 import { createAlunoComMatricula } from "@/app/alunos/actions";
-import type { MatriculaComProgresso } from "@/lib/matriculas";
-import type { Periodo } from "@/lib/periodos";
+import type { MatriculaComProgresso } from "@/lib/supabase/queries/matriculas";
+import type { Periodo } from "@/lib/supabase/queries/periodos";
 
 type NovoAlunoModalProps = {
   open: boolean;

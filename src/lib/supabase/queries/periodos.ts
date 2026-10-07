@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/server";
 import { getAulas, type Aula } from "@/lib/supabase/queries/aulas";
 
 export type Periodo = {
@@ -9,6 +9,7 @@ export type Periodo = {
 export type PeriodoComAulas = Periodo & { aulas: Aula[] };
 
 export async function getPeriodos(): Promise<Periodo[]> {
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("periodos")
     .select("*")
