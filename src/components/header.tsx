@@ -1,6 +1,5 @@
-"use client";
-
 import Link from "next/link";
+import { signOut } from "@/services/auth/actions";
 
 export function Header() {
   return (
@@ -12,12 +11,19 @@ export function Header() {
         >
           Sonora
         </Link>
-        <button
-          type="button"
-          className="rounded-full border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+        <form
+          action={async () => {
+            "use server";
+            await signOut();
+          }}
         >
-          Sair
-        </button>
+          <button
+            type="submit"
+            className="rounded-full border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+          >
+            Sair
+          </button>
+        </form>
       </div>
     </header>
   );

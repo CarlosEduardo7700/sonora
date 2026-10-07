@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getMatriculaDetalhe } from "@/lib/matriculas";
+import { getMatriculaDetalhe } from "@/lib/supabase/queries/matriculas";
 import { AlunoDetalheClient } from "@/components/aluno-detalhe-client";
 
 export default async function AlunoDetalhePage({

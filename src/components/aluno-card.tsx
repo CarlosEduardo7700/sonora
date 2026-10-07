@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { MatriculaComProgresso } from "@/lib/matriculas";
+import type { MatriculaComProgresso } from "@/lib/supabase/queries/matriculas";
 import { ProgressBar } from "@/components/progress-bar";
 
 type AlunoCardProps = {

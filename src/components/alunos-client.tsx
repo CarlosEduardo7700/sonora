@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import type { MatriculaComProgresso } from "@/lib/matriculas";
-import type { Periodo } from "@/lib/periodos";
+import type { MatriculaComProgresso } from "@/lib/supabase/queries/matriculas";
+import type { Periodo } from "@/lib/supabase/queries/periodos";
 import { AlunoCard } from "@/components/aluno-card";
 import { NovoAlunoModal } from "@/components/novo-aluno-modal";
 

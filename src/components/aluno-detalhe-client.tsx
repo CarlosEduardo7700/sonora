@@ -2,14 +2,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import type { AulaDaMatricula, MatriculaDetalhe } from "@/lib/matriculas";
+import type {
+  AulaDaMatricula,
+  MatriculaDetalhe,
+} from "@/lib/supabase/queries/matriculas";
 import { ProgressBar } from "@/components/progress-bar";
 import { AulaCheckCard } from "@/components/aula-check-card";
 import { Modal } from "@/components/modal";
 import {
   atualizarConclusaoAula,
   atualizarNota,
-} from "@/app/alunos/[id]/actions";
+} from "@/app/(protected)/alunos/[id]/actions";
 
 type AlunoDetalheClientProps = {
   matricula: MatriculaDetalhe;

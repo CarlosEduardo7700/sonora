@@ -1,4 +1,4 @@
-import type { PeriodoComAulas } from "@/lib/periodos";
+import type { PeriodoComAulas } from "@/lib/supabase/queries/periodos";
 
 type PeriodoBoxProps = {
   periodo: PeriodoComAulas;
@@ -22,8 +22,8 @@ export function PeriodoBox({ periodo }: PeriodoBoxProps) {
             key={aula.id}
             className="flex items-center gap-3 rounded-md border border-border bg-muted p-4"
           >
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
-              {aula.numero_aula}
+            <span className="flex h-8 w-16 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+              Aula {aula.numero_aula}
             </span>
             <span className="text-sm font-medium text-foreground">
               {aula.tema}

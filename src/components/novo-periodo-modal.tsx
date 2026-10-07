@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { Modal } from "@/components/modal";
-import { createPeriodoComAulas } from "@/app/periodos/actions";
-import type { PeriodoComAulas } from "@/lib/periodos";
+import { createPeriodoComAulas } from "@/app/(protected)/periodos/actions";
+import type { PeriodoComAulas } from "@/lib/supabase/queries/periodos";
 
 type RascunhoAula = {
   numeroAula: number;
@@ -90,7 +90,7 @@ export function NovoPeriodoModal({
     <Modal
       open={open}
       onClose={resetAndClose}
-      title={etapa === "dados" ? "Novo Período" : `Aulas de ${nomePeriodo}`}
+      title={etapa === "dados" ? "Novo Período" : `Aulas de "${nomePeriodo}"`}
     >
       {etapa === "dados" ? (
         <form onSubmit={handleContinuar} className="flex flex-col gap-4">
@@ -109,7 +109,7 @@ export function NovoPeriodoModal({
             Para qual período?
             <input
               type="text"
-              placeholder="Ex: S1/2027"
+              placeholder="Ex: MSA: Módulo 1 ao 3"
               value={nomePeriodo}
               onChange={(event) => setNomePeriodo(event.target.value)}
               required
@@ -140,8 +140,8 @@ export function NovoPeriodoModal({
                 key={aula.numeroAula}
                 className="flex items-center gap-3 text-sm font-medium text-foreground"
               >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
-                  {aula.numeroAula}
+                <span className="flex h-8 w-16 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+                  Aula {aula.numeroAula}
                 </span>
                 <input
                   type="text"
