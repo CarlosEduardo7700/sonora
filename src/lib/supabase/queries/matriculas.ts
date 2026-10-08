@@ -40,6 +40,12 @@ export type MatriculaComProgresso = {
   aulasConcluidas: number;
 };
 
+export type MatriculaDoAluno = {
+  matriculaId: string;
+  periodoId: string;
+  nomePeriodo: string;
+};
+
 export async function getMatriculas(): Promise<Matricula[]> {
   const supabase = await createClient();
   const { data, error } = await supabase.from("matriculas").select("*");
@@ -92,6 +98,32 @@ export async function getMatriculasComProgresso(): Promise<
         .length,
     };
   });
+}
+
+export async function getMatriculasDoAluno(
+  alunoId: string
+): Promise<MatriculaDoAluno[]> {
+  const supabase = await createClient();
+  const [matriculasResult, periodos] = await Promise.all([
+    supabase.from("matriculas").select("*").eq("aluno_id", alunoId),
+    getPeriodos(),
+  ]);
+
+  if (matriculasResult.error) {
+    throw new Error(matriculasResult.error.message);
+  }
+
+  const periodosPorId = new Map(
+    periodos.map((periodo) => [periodo.id, periodo])
+  );
+
+  return matriculasResult.data
+    .map((matricula) => ({
+      matriculaId: matricula.id,
+      periodoId: matricula.periodo_id,
+      nomePeriodo: periodosPorId.get(matricula.periodo_id)?.nome ?? "-",
+    }))
+    .sort((a, b) => a.nomePeriodo.localeCompare(b.nomePeriodo));
 }
 
 export async function getMatriculaDetalhe(
