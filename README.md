@@ -8,7 +8,7 @@ O fluxo atual cobre três áreas principais:
 
 - Cadastro e listagem de períodos, com criação do período e de suas aulas no mesmo fluxo.
 - Cadastro e listagem de alunos, vinculando cada aluno a um período e criando a matrícula e as aulas pendentes automaticamente.
-- Página de detalhe do aluno, com atualização de nota e confirmação de aulas concluídas.
+- Página de detalhe do aluno, com troca entre os períodos cursados, matrícula em novos períodos, atualização de nota e confirmação de aulas concluídas.
 
 ## Stack
 
@@ -37,21 +37,23 @@ sonora/
     │       │   ├── page.tsx         # Listagem e cadastro de períodos
     │       │   └── actions.ts       # Server Actions: criar período e suas aulas
     │       └── alunos/
-    │           ├── page.tsx         # Listagem e cadastro de alunos (matrículas)
+    │           ├── page.tsx         # Listagem e cadastro de alunos (um card por aluno)
     │           ├── actions.ts       # Server Actions: criar aluno + matrícula + aulas pendentes
-    │           └── [id]/
-    │               ├── page.tsx     # Detalhe de uma matrícula: nota e progresso por aula
-    │               └── actions.ts   # Server Actions: atualizar nota e marcar aula concluída
+    │           └── [id]/            # [id] = id do aluno
+    │               ├── page.tsx     # Detalhe do aluno: período atual, nota e progresso por aula
+    │               └── actions.ts   # Server Actions: trocar período, adicionar período, atualizar nota e marcar aula concluída
     ├── components/
     │   ├── header.tsx               # Cabeçalho das páginas protegidas
     │   ├── nav-card.tsx             # Atalho de navegação na home
     │   ├── periodo-box.tsx          # Card de exibição de um período e suas aulas
     │   ├── periodos-client.tsx      # Lógica client-side da página de períodos (modal, listagem)
     │   ├── novo-periodo-modal.tsx   # Modal de criação de período + aulas
-    │   ├── aluno-card.tsx           # Card de exibição de uma matrícula na listagem de alunos
+    │   ├── aluno-card.tsx           # Card de exibição de um aluno na listagem de alunos
     │   ├── alunos-client.tsx        # Lógica client-side da página de alunos (modal, listagem)
     │   ├── novo-aluno-modal.tsx     # Modal de criação de aluno/matrícula
     │   ├── aluno-detalhe-client.tsx # Lógica client-side da página de detalhe do aluno
+    │   ├── periodo-switcher.tsx     # Botão/dropdown para alternar entre os períodos do aluno
+    │   ├── novo-periodo-aluno-modal.tsx # Modal para matricular o aluno em um novo período
     │   ├── aula-check-card.tsx      # Checkbox de conclusão de uma aula da matrícula
     │   ├── progress-bar.tsx         # Barra de progresso de aulas concluídas
     │   └── modal.tsx                # Componente genérico de modal
@@ -76,7 +78,7 @@ sonora/
 - `/` - página inicial com atalhos para alunos e períodos
 - `/periodos` - listagem e cadastro de períodos
 - `/alunos` - listagem e cadastro de alunos
-- `/alunos/[id]` - detalhe de uma matrícula de aluno, com nota e progresso por aula
+- `/alunos/[id]` - detalhe de um aluno (`id` do aluno), com troca de período, nota e progresso por aula
 
 ## Funcionalidades
 
@@ -88,13 +90,16 @@ sonora/
 
 ### Alunos
 
-- Lista matrículas com nome, instrumento, período, nota e progresso.
+- Lista todos os alunos cadastrados, um card por aluno, inclusive os sem matrícula (exibidos como "Sem período").
+- O card mostra instrumento, período atual e progresso. O período atual é o de maior nome entre as matrículas do aluno.
 - Permite cadastrar um aluno escolhendo um período existente.
 - Cria automaticamente o aluno, a matrícula e os registros de aulas da matrícula com `concluida = false`.
 
 ### Detalhe do aluno
 
 - Exibe nome, instrumento, período e barra de progresso.
+- O período é um botão: ao clicar, alterna entre os períodos em que o aluno está matriculado. Nota, progresso e aulas mudam conforme o período escolhido, e o histórico dos demais é preservado.
+- O botão "+" matricula o aluno em outro período existente, criando a matrícula e as aulas pendentes.
 - Permite salvar a nota da matrícula.
 - Permite marcar/desmarcar aulas como concluídas com confirmação.
 
@@ -193,6 +198,7 @@ erDiagram
 2. Ao criar um **aluno** vinculado a um período, a aplicação cria em sequência: o registro em `alunos`, a `matricula` (aluno + período) e um registro em `aula_matricula` com `concluida = false` para cada aula já existente do período.
 3. A nota do aluno naquele período é lançada diretamente em `matriculas.nota`.
 4. O progresso é atualizado marcando/desmarcando `aula_matricula.concluida` conforme o aluno conclui cada aula.
+5. Ao matricular um aluno existente em outro período, é criada uma nova `matricula` com seus registros de `aula_matricula`, sem alterar as matrículas anteriores.
 
 ### Observação importante sobre segurança
 
