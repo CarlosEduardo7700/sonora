@@ -3,8 +3,8 @@
 import { useState } from "react";
 import type { AlunoNaListagem } from "@/lib/supabase/queries/matriculas";
 import type { Periodo } from "@/lib/supabase/queries/periodos";
-import { AlunoCard } from "@/components/aluno-card";
-import { NovoAlunoModal } from "@/components/novo-aluno-modal";
+import { AlunoCard } from "@/components/alunos/aluno-card";
+import { NovoAlunoModal } from "@/components/alunos/novo-aluno-modal";
 
 type AlunosClientProps = {
   alunosIniciais: AlunoNaListagem[];

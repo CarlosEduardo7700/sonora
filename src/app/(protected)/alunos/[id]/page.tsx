@@ -5,7 +5,7 @@ import {
   getMatriculasDoAluno,
 } from "@/lib/supabase/queries/matriculas";
 import { getPeriodos } from "@/lib/supabase/queries/periodos";
-import { AlunoDetalheClient } from "@/components/aluno-detalhe-client";
+import { AlunoDetalheClient } from "@/components/alunos/aluno-detalhe-client";
 
 export default async function AlunoDetalhePage({
   params,

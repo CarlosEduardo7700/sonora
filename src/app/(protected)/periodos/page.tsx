@@ -1,5 +1,5 @@
 import { getPeriodosComAulas } from "@/lib/supabase/queries/periodos";
-import { PeriodosClient } from "@/components/periodos-client";
+import { PeriodosClient } from "@/components/periodos/periodos-client";
 
 export default async function PeriodosPage() {
   const periodos = await getPeriodosComAulas();

@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import type { PeriodoComAulas } from "@/lib/supabase/queries/periodos";
-import { PeriodoBox } from "@/components/periodo-box";
-import { NovoPeriodoModal } from "@/components/novo-periodo-modal";
+import { PeriodoBox } from "@/components/periodos/periodo-box";
+import { NovoPeriodoModal } from "@/components/periodos/novo-periodo-modal";
 
 type PeriodosClientProps = {
   periodosIniciais: PeriodoComAulas[];

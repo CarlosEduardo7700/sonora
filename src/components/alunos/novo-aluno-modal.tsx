@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Modal } from "@/components/modal";
+import { Modal } from "@/components/ui/modal";
 import { createAlunoComMatricula } from "@/app/(protected)/alunos/actions";
 import type { AlunoNaListagem } from "@/lib/supabase/queries/matriculas";
 import type { Periodo } from "@/lib/supabase/queries/periodos";

@@ -1,4 +1,4 @@
-import { NavCard } from "@/components/nav-card";
+import { NavCard } from "@/components/ui/nav-card";
 
 export default function Home() {
   return (

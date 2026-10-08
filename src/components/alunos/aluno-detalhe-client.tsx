@@ -7,11 +7,11 @@ import type {
   MatriculaDetalhe,
   MatriculaDoAluno,
 } from "@/lib/supabase/queries/matriculas";
-import { ProgressBar } from "@/components/progress-bar";
-import { AulaCheckCard } from "@/components/aula-check-card";
-import { Modal } from "@/components/modal";
-import { PeriodoSwitcher } from "@/components/periodo-switcher";
-import { NovoPeriodoAlunoModal } from "@/components/novo-periodo-aluno-modal";
+import { ProgressBar } from "@/components/ui/progress-bar";
+import { AulaCheckCard } from "@/components/alunos/aula-check-card";
+import { Modal } from "@/components/ui/modal";
+import { PeriodoSwitcher } from "@/components/alunos/periodo-switcher";
+import { NovoPeriodoAlunoModal } from "@/components/alunos/novo-periodo-aluno-modal";
 import type { Periodo } from "@/lib/supabase/queries/periodos";
 import type { Aluno } from "@/lib/supabase/queries/alunos";
 import {

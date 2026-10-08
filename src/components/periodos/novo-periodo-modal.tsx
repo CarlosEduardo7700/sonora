@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Modal } from "@/components/modal";
+import { Modal } from "@/components/ui/modal";
 import { createPeriodoComAulas } from "@/app/(protected)/periodos/actions";
 import type { PeriodoComAulas } from "@/lib/supabase/queries/periodos";
 

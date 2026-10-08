@@ -1,6 +1,6 @@
 import { getAlunosNaListagem } from "@/lib/supabase/queries/matriculas";
 import { getPeriodos } from "@/lib/supabase/queries/periodos";
-import { AlunosClient } from "@/components/alunos-client";
+import { AlunosClient } from "@/components/alunos/alunos-client";
 
 export default async function AlunosPage() {
   const [alunos, periodos] = await Promise.all([
