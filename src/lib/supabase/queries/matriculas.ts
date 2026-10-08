@@ -28,16 +28,20 @@ export type MatriculaDetalhe = {
   aulas: AulaDaMatricula[];
 };
 
-export type MatriculaComProgresso = {
-  matriculaId: string;
+export type AlunoNaListagem = {
   alunoId: string;
   nomeAluno: string;
   instrumento: string;
-  periodoId: string;
-  nomePeriodo: string;
+  nomePeriodo: string | null;
   nota: number | null;
   totalAulas: number;
   aulasConcluidas: number;
+};
+
+export type MatriculaDoAluno = {
+  matriculaId: string;
+  periodoId: string;
+  nomePeriodo: string;
 };
 
 export async function getMatriculas(): Promise<Matricula[]> {
@@ -51,8 +55,8 @@ export async function getMatriculas(): Promise<Matricula[]> {
   return data;
 }
 
-export async function getMatriculasComProgresso(): Promise<
-  MatriculaComProgresso[]
+export async function getAlunosNaListagem(): Promise<
+  AlunoNaListagem[]
 > {
   const supabase = await createClient();
   const [matriculas, alunos, periodos, checksResult] = await Promise.all([
@@ -67,31 +71,105 @@ export async function getMatriculasComProgresso(): Promise<
   }
 
   const checks = checksResult.data;
-  const alunosPorId = new Map(alunos.map((aluno) => [aluno.id, aluno]));
   const periodosPorId = new Map(
     periodos.map((periodo) => [periodo.id, periodo])
   );
 
-  return matriculas.map((matricula) => {
-    const aluno = alunosPorId.get(matricula.aluno_id);
-    const periodo = periodosPorId.get(matricula.periodo_id);
-    const checksDaMatricula = checks.filter(
-      (check) => check.matricula_id === matricula.id
-    );
+  return alunos.map((aluno) => {
+    // Sem data no schema, o período "atual" é o de maior nome.
+    const atual = matriculas
+      .filter((matricula) => matricula.aluno_id === aluno.id)
+      .map((matricula) => ({
+        matricula,
+        nomePeriodo: periodosPorId.get(matricula.periodo_id)?.nome ?? "-",
+      }))
+      .sort((a, b) => a.nomePeriodo.localeCompare(b.nomePeriodo))
+      .at(-1);
+
+    const checksDaMatricula = atual
+      ? checks.filter((check) => check.matricula_id === atual.matricula.id)
+      : [];
 
     return {
-      matriculaId: matricula.id,
-      alunoId: matricula.aluno_id,
-      nomeAluno: aluno?.nome ?? "Aluno não encontrado",
-      instrumento: aluno?.instrumento ?? "-",
-      periodoId: matricula.periodo_id,
-      nomePeriodo: periodo?.nome ?? "-",
-      nota: matricula.nota,
+      alunoId: aluno.id,
+      nomeAluno: aluno.nome,
+      instrumento: aluno.instrumento,
+      nomePeriodo: atual?.nomePeriodo ?? null,
+      nota: atual?.matricula.nota ?? null,
       totalAulas: checksDaMatricula.length,
       aulasConcluidas: checksDaMatricula.filter((check) => check.concluida)
         .length,
     };
   });
+}
+
+export async function getMatriculasDoAluno(
+  alunoId: string
+): Promise<MatriculaDoAluno[]> {
+  const supabase = await createClient();
+  const [matriculasResult, periodos] = await Promise.all([
+    supabase.from("matriculas").select("*").eq("aluno_id", alunoId),
+    getPeriodos(),
+  ]);
+
+  if (matriculasResult.error) {
+    throw new Error(matriculasResult.error.message);
+  }
+
+  const periodosPorId = new Map(
+    periodos.map((periodo) => [periodo.id, periodo])
+  );
+
+  return matriculasResult.data
+    .map((matricula) => ({
+      matriculaId: matricula.id,
+      periodoId: matricula.periodo_id,
+      nomePeriodo: periodosPorId.get(matricula.periodo_id)?.nome ?? "-",
+    }))
+    .sort((a, b) => a.nomePeriodo.localeCompare(b.nomePeriodo));
+}
+
+export async function createMatriculaComAulas(
+  alunoId: string,
+  periodoId: string
+): Promise<Matricula> {
+  const supabase = await createClient();
+  const { data: matricula, error: matriculaError } = await supabase
+    .from("matriculas")
+    .insert({ aluno_id: alunoId, periodo_id: periodoId })
+    .select()
+    .single();
+
+  if (matriculaError) {
+    throw new Error(matriculaError.message);
+  }
+
+  const { data: aulas, error: aulasError } = await supabase
+    .from("aulas")
+    .select("id")
+    .eq("periodo_id", periodoId);
+
+  if (aulasError) {
+    await supabase.from("matriculas").delete().eq("id", matricula.id);
+    throw new Error(aulasError.message);
+  }
+
+  if (aulas.length > 0) {
+    const { error: checksError } = await supabase.from("aula_matricula").insert(
+      aulas.map((aula) => ({
+        matricula_id: matricula.id,
+        aula_id: aula.id,
+        concluida: false,
+      }))
+    );
+
+    if (checksError) {
+      await supabase.from("matriculas").delete().eq("id", matricula.id);
+      throw new Error(checksError.message);
+    }
+  }
+
+  return matricula;
 }
 
 export async function getMatriculaDetalhe(
