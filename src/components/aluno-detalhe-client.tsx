@@ -11,7 +11,10 @@ import { ProgressBar } from "@/components/progress-bar";
 import { AulaCheckCard } from "@/components/aula-check-card";
 import { Modal } from "@/components/modal";
 import { PeriodoSwitcher } from "@/components/periodo-switcher";
+import { NovoPeriodoAlunoModal } from "@/components/novo-periodo-aluno-modal";
+import type { Periodo } from "@/lib/supabase/queries/periodos";
 import {
+  adicionarPeriodoAoAluno,
   atualizarConclusaoAula,
   atualizarNota,
   trocarPeriodoMatricula,
@@ -20,13 +23,18 @@ import {
 type AlunoDetalheClientProps = {
   matricula: MatriculaDetalhe;
   periodosDoAluno: MatriculaDoAluno[];
+  todosPeriodos: Periodo[];
 };
 
 export function AlunoDetalheClient({
   matricula: matriculaInicial,
-  periodosDoAluno,
+  periodosDoAluno: periodosIniciais,
+  todosPeriodos,
 }: AlunoDetalheClientProps) {
   const [matricula, setMatricula] = useState(matriculaInicial);
+  const [periodosDoAluno, setPeriodosDoAluno] = useState(periodosIniciais);
+  const [modalPeriodoAberto, setModalPeriodoAberto] = useState(false);
+  const [erroModal, setErroModal] = useState<string | null>(null);
   const [aulaSelecionada, setAulaSelecionada] =
     useState<AulaDaMatricula | null>(null);
   const [notaDraft, setNotaDraft] = useState(
@@ -63,6 +71,35 @@ export function AlunoDetalheClient({
       );
     } finally {
       setTrocandoPeriodo(false);
+    }
+  }
+
+  const periodosNaoMatriculados = todosPeriodos.filter(
+    (periodo) => !periodosDoAluno.some((item) => item.periodoId === periodo.id)
+  );
+
+  function fecharModalPeriodo() {
+    setModalPeriodoAberto(false);
+    setErroModal(null);
+  }
+
+  async function handleAdicionarPeriodo(periodoId: string) {
+    setErroModal(null);
+    try {
+      const resultado = await adicionarPeriodoAoAluno(
+        matricula.alunoId,
+        periodoId
+      );
+      setPeriodosDoAluno(resultado.periodosDoAluno);
+      setMatricula(resultado.matricula);
+      setNotaDraft(
+        resultado.matricula.nota !== null ? String(resultado.matricula.nota) : ""
+      );
+      setModalPeriodoAberto(false);
+    } catch (error) {
+      setErroModal(
+        error instanceof Error ? error.message : "Erro ao adicionar período"
+      );
     }
   }
 
@@ -136,6 +173,14 @@ export function AlunoDetalheClient({
             disabled={trocandoPeriodo}
             onSelecionar={handleTrocarPeriodo}
           />
+          <button
+            type="button"
+            onClick={() => setModalPeriodoAberto(true)}
+            aria-label="Adicionar período"
+            className="flex h-6 w-6 items-center justify-center rounded-full border border-border bg-muted font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+          >
+            +
+          </button>
         </div>
       </div>
 
@@ -196,6 +241,14 @@ export function AlunoDetalheClient({
           ))}
         </div>
       </div>
+
+      <NovoPeriodoAlunoModal
+        open={modalPeriodoAberto}
+        onClose={fecharModalPeriodo}
+        onConfirmar={handleAdicionarPeriodo}
+        periodosDisponiveis={periodosNaoMatriculados}
+        erro={erroModal}
+      />
 
       <Modal
         open={aulaSelecionada !== null}

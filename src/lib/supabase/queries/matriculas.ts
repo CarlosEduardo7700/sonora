@@ -126,6 +126,49 @@ export async function getMatriculasDoAluno(
     .sort((a, b) => a.nomePeriodo.localeCompare(b.nomePeriodo));
 }
 
+export async function createMatriculaComAulas(
+  alunoId: string,
+  periodoId: string
+): Promise<Matricula> {
+  const supabase = await createClient();
+  const { data: matricula, error: matriculaError } = await supabase
+    .from("matriculas")
+    .insert({ aluno_id: alunoId, periodo_id: periodoId })
+    .select()
+    .single();
+
+  if (matriculaError) {
+    throw new Error(matriculaError.message);
+  }
+
+  const { data: aulas, error: aulasError } = await supabase
+    .from("aulas")
+    .select("id")
+    .eq("periodo_id", periodoId);
+
+  if (aulasError) {
+    await supabase.from("matriculas").delete().eq("id", matricula.id);
+    throw new Error(aulasError.message);
+  }
+
+  if (aulas.length > 0) {
+    const { error: checksError } = await supabase.from("aula_matricula").insert(
+      aulas.map((aula) => ({
+        matricula_id: matricula.id,
+        aula_id: aula.id,
+        concluida: false,
+      }))
+    );
+
+    if (checksError) {
+      await supabase.from("matriculas").delete().eq("id", matricula.id);
+      throw new Error(checksError.message);
+    }
+  }
+
+  return matricula;
+}
+
 export async function getMatriculaDetalhe(
   matriculaId: string
 ): Promise<MatriculaDetalhe | null> {
