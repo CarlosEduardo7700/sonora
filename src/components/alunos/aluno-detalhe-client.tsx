@@ -19,7 +19,7 @@ import {
   atualizarConclusaoAula,
   atualizarNota,
   trocarPeriodoMatricula,
-} from "@/app/(protected)/alunos/[id]/actions";
+} from "@/actions/alunos-detalhes";
 
 type AlunoDetalheClientProps = {
   aluno: Aluno;

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Modal } from "@/components/ui/modal";
-import { createPeriodoComAulas } from "@/app/(protected)/periodos/actions";
+import { createPeriodoComAulas } from "@/actions/periodos";
 import type { PeriodoComAulas } from "@/repositories/periodos";
 
 type RascunhoAula = {
