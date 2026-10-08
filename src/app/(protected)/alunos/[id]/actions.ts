@@ -63,8 +63,7 @@ export async function trocarPeriodoMatricula(
 
 export async function atualizarConclusaoAula(
   aulaMatriculaId: string,
-  concluida: boolean,
-  matriculaId: string
+  concluida: boolean
 ) {
   const supabase = await createClient();
   const { error } = await supabase
@@ -76,7 +75,7 @@ export async function atualizarConclusaoAula(
     throw new Error(error.message);
   }
 
-  revalidatePath(`/alunos/${matriculaId}`);
+  revalidatePath("/alunos/[id]", "page");
   revalidatePath("/alunos");
 }
 
@@ -91,6 +90,6 @@ export async function atualizarNota(matriculaId: string, nota: number | null) {
     throw new Error(error.message);
   }
 
-  revalidatePath(`/alunos/${matriculaId}`);
+  revalidatePath("/alunos/[id]", "page");
   revalidatePath("/alunos");
 }

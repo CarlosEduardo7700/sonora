@@ -3,13 +3,13 @@
 import { useState } from "react";
 import { Modal } from "@/components/modal";
 import { createAlunoComMatricula } from "@/app/(protected)/alunos/actions";
-import type { MatriculaComProgresso } from "@/lib/supabase/queries/matriculas";
+import type { AlunoNaListagem } from "@/lib/supabase/queries/matriculas";
 import type { Periodo } from "@/lib/supabase/queries/periodos";
 
 type NovoAlunoModalProps = {
   open: boolean;
   onClose: () => void;
-  onCreated: (aluno: MatriculaComProgresso) => void;
+  onCreated: (aluno: AlunoNaListagem) => void;
   periodosDisponiveis: Periodo[];
 };
 

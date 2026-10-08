@@ -2,13 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import type { MatriculaComProgresso } from "@/lib/supabase/queries/matriculas";
+import type { AlunoNaListagem } from "@/lib/supabase/queries/matriculas";
 
 export async function createAlunoComMatricula(
   nome: string,
   instrumento: string,
   periodoId: string
-): Promise<MatriculaComProgresso> {
+): Promise<AlunoNaListagem> {
   const supabase = await createClient();
   const nomeTratado = nome.trim();
   const instrumentoTratado = instrumento.trim();
@@ -78,11 +78,9 @@ export async function createAlunoComMatricula(
   revalidatePath("/alunos");
 
   return {
-    matriculaId: matricula.id,
     alunoId: aluno.id,
     nomeAluno: aluno.nome,
     instrumento: aluno.instrumento,
-    periodoId: periodo.id,
     nomePeriodo: periodo.nome,
     nota: matricula.nota,
     totalAulas: aulasDoPeriodo.length,

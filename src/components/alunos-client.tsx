@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import type { MatriculaComProgresso } from "@/lib/supabase/queries/matriculas";
+import type { AlunoNaListagem } from "@/lib/supabase/queries/matriculas";
 import type { Periodo } from "@/lib/supabase/queries/periodos";
 import { AlunoCard } from "@/components/aluno-card";
 import { NovoAlunoModal } from "@/components/novo-aluno-modal";
 
 type AlunosClientProps = {
-  alunosIniciais: MatriculaComProgresso[];
+  alunosIniciais: AlunoNaListagem[];
   periodosDisponiveis: Periodo[];
 };
 
@@ -35,7 +35,7 @@ export function AlunosClient({
 
       <div className="flex flex-col gap-4">
         {alunos.map((aluno) => (
-          <AlunoCard key={aluno.matriculaId} aluno={aluno} />
+          <AlunoCard key={aluno.alunoId} aluno={aluno} />
         ))}
       </div>
 

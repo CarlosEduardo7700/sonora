@@ -13,6 +13,7 @@ import { Modal } from "@/components/modal";
 import { PeriodoSwitcher } from "@/components/periodo-switcher";
 import { NovoPeriodoAlunoModal } from "@/components/novo-periodo-aluno-modal";
 import type { Periodo } from "@/lib/supabase/queries/periodos";
+import type { Aluno } from "@/lib/supabase/queries/alunos";
 import {
   adicionarPeriodoAoAluno,
   atualizarConclusaoAula,
@@ -21,12 +22,14 @@ import {
 } from "@/app/(protected)/alunos/[id]/actions";
 
 type AlunoDetalheClientProps = {
-  matricula: MatriculaDetalhe;
+  aluno: Aluno;
+  matricula: MatriculaDetalhe | null;
   periodosDoAluno: MatriculaDoAluno[];
   todosPeriodos: Periodo[];
 };
 
 export function AlunoDetalheClient({
+  aluno,
   matricula: matriculaInicial,
   periodosDoAluno: periodosIniciais,
   todosPeriodos,
@@ -38,27 +41,27 @@ export function AlunoDetalheClient({
   const [aulaSelecionada, setAulaSelecionada] =
     useState<AulaDaMatricula | null>(null);
   const [notaDraft, setNotaDraft] = useState(
-    matriculaInicial.nota !== null ? String(matriculaInicial.nota) : ""
+    matriculaInicial?.nota != null ? String(matriculaInicial.nota) : ""
   );
   const [salvandoAula, setSalvandoAula] = useState(false);
   const [salvandoNota, setSalvandoNota] = useState(false);
   const [trocandoPeriodo, setTrocandoPeriodo] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
-  const aulas = matricula.aulas;
+  const aulas = matricula?.aulas ?? [];
   const totalAulas = aulas.length;
   const aulasConcluidas = aulas.filter((aula) => aula.concluida).length;
   const percentual =
     totalAulas > 0 ? Math.round((aulasConcluidas / totalAulas) * 100) : 0;
 
   async function handleTrocarPeriodo(matriculaId: string) {
-    if (matriculaId === matricula.matriculaId) return;
+    if (matriculaId === matricula?.matriculaId) return;
 
     setTrocandoPeriodo(true);
     setErro(null);
     try {
       const novaMatricula = await trocarPeriodoMatricula(
-        matricula.alunoId,
+        aluno.id,
         matriculaId
       );
       setMatricula(novaMatricula);
@@ -87,7 +90,7 @@ export function AlunoDetalheClient({
     setErroModal(null);
     try {
       const resultado = await adicionarPeriodoAoAluno(
-        matricula.alunoId,
+        aluno.id,
         periodoId
       );
       setPeriodosDoAluno(resultado.periodosDoAluno);
@@ -104,7 +107,7 @@ export function AlunoDetalheClient({
   }
 
   async function handleConfirmar() {
-    if (!aulaSelecionada) return;
+    if (!aulaSelecionada || !matricula) return;
     const novoEstado = !aulaSelecionada.concluida;
 
     setSalvandoAula(true);
@@ -112,17 +115,18 @@ export function AlunoDetalheClient({
     try {
       await atualizarConclusaoAula(
         aulaSelecionada.aulaMatriculaId,
-        novoEstado,
-        matricula.matriculaId
+        novoEstado
       );
-      setMatricula((prev) => ({
-        ...prev,
-        aulas: prev.aulas.map((aula) =>
-          aula.aulaId === aulaSelecionada.aulaId
-            ? { ...aula, concluida: novoEstado }
-            : aula
-        ),
-      }));
+      setMatricula((prev) =>
+        prev && {
+          ...prev,
+          aulas: prev.aulas.map((aula) =>
+            aula.aulaId === aulaSelecionada.aulaId
+              ? { ...aula, concluida: novoEstado }
+              : aula
+          ),
+        }
+      );
       setAulaSelecionada(null);
     } catch (error) {
       setErro(error instanceof Error ? error.message : "Erro ao atualizar aula");
@@ -133,6 +137,7 @@ export function AlunoDetalheClient({
 
   async function handleSalvarNota(event: React.FormEvent) {
     event.preventDefault();
+    if (!matricula) return;
     const valor = notaDraft.trim() === "" ? null : Number(notaDraft);
     if (valor !== null && (Number.isNaN(valor) || valor < 0 || valor > 10)) {
       return;
@@ -142,7 +147,7 @@ export function AlunoDetalheClient({
     setErro(null);
     try {
       await atualizarNota(matricula.matriculaId, valor);
-      setMatricula((prev) => ({ ...prev, nota: valor }));
+      setMatricula((prev) => prev && { ...prev, nota: valor });
     } catch (error) {
       setErro(error instanceof Error ? error.message : "Erro ao salvar nota");
     } finally {
@@ -161,18 +166,22 @@ export function AlunoDetalheClient({
 
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          {matricula.nomeAluno}
+          {aluno.nome}
         </h1>
         <div className="flex items-center gap-1 text-sm text-muted-foreground">
-          <span>{matricula.instrumento}</span>
+          <span>{aluno.instrumento}</span>
           <span>·</span>
-          <PeriodoSwitcher
-            periodoAtual={matricula.nomePeriodo}
-            periodos={periodosDoAluno}
-            matriculaAtualId={matricula.matriculaId}
-            disabled={trocandoPeriodo}
-            onSelecionar={handleTrocarPeriodo}
-          />
+          {matricula ? (
+            <PeriodoSwitcher
+              periodoAtual={matricula.nomePeriodo}
+              periodos={periodosDoAluno}
+              matriculaAtualId={matricula.matriculaId}
+              disabled={trocandoPeriodo}
+              onSelecionar={handleTrocarPeriodo}
+            />
+          ) : (
+            <span>Sem período</span>
+          )}
           <button
             type="button"
             onClick={() => setModalPeriodoAberto(true)}
@@ -184,6 +193,7 @@ export function AlunoDetalheClient({
         </div>
       </div>
 
+      {matricula && (
       <div
         className={`flex flex-col gap-6 ${
           trocandoPeriodo ? "pointer-events-none opacity-60" : ""
@@ -241,6 +251,7 @@ export function AlunoDetalheClient({
           ))}
         </div>
       </div>
+      )}
 
       <NovoPeriodoAlunoModal
         open={modalPeriodoAberto}

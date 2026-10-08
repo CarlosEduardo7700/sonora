@@ -28,13 +28,11 @@ export type MatriculaDetalhe = {
   aulas: AulaDaMatricula[];
 };
 
-export type MatriculaComProgresso = {
-  matriculaId: string;
+export type AlunoNaListagem = {
   alunoId: string;
   nomeAluno: string;
   instrumento: string;
-  periodoId: string;
-  nomePeriodo: string;
+  nomePeriodo: string | null;
   nota: number | null;
   totalAulas: number;
   aulasConcluidas: number;
@@ -57,8 +55,8 @@ export async function getMatriculas(): Promise<Matricula[]> {
   return data;
 }
 
-export async function getMatriculasComProgresso(): Promise<
-  MatriculaComProgresso[]
+export async function getAlunosNaListagem(): Promise<
+  AlunoNaListagem[]
 > {
   const supabase = await createClient();
   const [matriculas, alunos, periodos, checksResult] = await Promise.all([
@@ -73,26 +71,31 @@ export async function getMatriculasComProgresso(): Promise<
   }
 
   const checks = checksResult.data;
-  const alunosPorId = new Map(alunos.map((aluno) => [aluno.id, aluno]));
   const periodosPorId = new Map(
     periodos.map((periodo) => [periodo.id, periodo])
   );
 
-  return matriculas.map((matricula) => {
-    const aluno = alunosPorId.get(matricula.aluno_id);
-    const periodo = periodosPorId.get(matricula.periodo_id);
-    const checksDaMatricula = checks.filter(
-      (check) => check.matricula_id === matricula.id
-    );
+  return alunos.map((aluno) => {
+    // Sem data no schema, o período "atual" é o de maior nome.
+    const atual = matriculas
+      .filter((matricula) => matricula.aluno_id === aluno.id)
+      .map((matricula) => ({
+        matricula,
+        nomePeriodo: periodosPorId.get(matricula.periodo_id)?.nome ?? "-",
+      }))
+      .sort((a, b) => a.nomePeriodo.localeCompare(b.nomePeriodo))
+      .at(-1);
+
+    const checksDaMatricula = atual
+      ? checks.filter((check) => check.matricula_id === atual.matricula.id)
+      : [];
 
     return {
-      matriculaId: matricula.id,
-      alunoId: matricula.aluno_id,
-      nomeAluno: aluno?.nome ?? "Aluno não encontrado",
-      instrumento: aluno?.instrumento ?? "-",
-      periodoId: matricula.periodo_id,
-      nomePeriodo: periodo?.nome ?? "-",
-      nota: matricula.nota,
+      alunoId: aluno.id,
+      nomeAluno: aluno.nome,
+      instrumento: aluno.instrumento,
+      nomePeriodo: atual?.nomePeriodo ?? null,
+      nota: atual?.matricula.nota ?? null,
       totalAulas: checksDaMatricula.length,
       aulasConcluidas: checksDaMatricula.filter((check) => check.concluida)
         .length,

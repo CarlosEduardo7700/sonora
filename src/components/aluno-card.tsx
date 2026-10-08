@@ -1,9 +1,9 @@
 import Link from "next/link";
-import type { MatriculaComProgresso } from "@/lib/supabase/queries/matriculas";
+import type { AlunoNaListagem } from "@/lib/supabase/queries/matriculas";
 import { ProgressBar } from "@/components/progress-bar";
 
 type AlunoCardProps = {
-  aluno: MatriculaComProgresso;
+  aluno: AlunoNaListagem;
 };
 
 export function AlunoCard({ aluno }: AlunoCardProps) {
@@ -20,11 +20,11 @@ export function AlunoCard({ aluno }: AlunoCardProps) {
             {aluno.nomeAluno}
           </h2>
           <p className="text-sm text-muted-foreground">
-            {aluno.instrumento} · {aluno.nomePeriodo}
+            {aluno.instrumento} · {aluno.nomePeriodo ?? "Sem período"}
           </p>
         </div>
         <Link
-          href={`/alunos/${aluno.matriculaId}`}
+          href={`/alunos/${aluno.alunoId}`}
           className="shrink-0 rounded-full border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary"
         >
           Ver mais
