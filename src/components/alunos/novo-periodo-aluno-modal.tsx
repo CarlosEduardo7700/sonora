@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Modal } from "@/components/ui/modal";
-import type { Periodo } from "@/lib/supabase/queries/periodos";
+import type { Periodo } from "@/repositories/periodos";
 
 type NovoPeriodoAlunoModalProps = {
   open: boolean;

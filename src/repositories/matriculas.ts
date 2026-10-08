@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import { getAlunos } from "@/lib/supabase/queries/alunos";
-import { getPeriodos } from "@/lib/supabase/queries/periodos";
+import { getAlunos } from "@/repositories/alunos";
+import { getPeriodos } from "@/repositories/periodos";
 
 export type Matricula = {
   id: string;

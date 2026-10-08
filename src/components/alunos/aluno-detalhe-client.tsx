@@ -6,14 +6,14 @@ import type {
   AulaDaMatricula,
   MatriculaDetalhe,
   MatriculaDoAluno,
-} from "@/lib/supabase/queries/matriculas";
+} from "@/repositories/matriculas";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { AulaCheckCard } from "@/components/alunos/aula-check-card";
 import { Modal } from "@/components/ui/modal";
 import { PeriodoSwitcher } from "@/components/alunos/periodo-switcher";
 import { NovoPeriodoAlunoModal } from "@/components/alunos/novo-periodo-aluno-modal";
-import type { Periodo } from "@/lib/supabase/queries/periodos";
-import type { Aluno } from "@/lib/supabase/queries/alunos";
+import type { Periodo } from "@/repositories/periodos";
+import type { Aluno } from "@/repositories/alunos";
 import {
   adicionarPeriodoAoAluno,
   atualizarConclusaoAula,

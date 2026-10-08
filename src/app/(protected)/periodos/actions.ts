@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import type { PeriodoComAulas } from "@/lib/supabase/queries/periodos";
+import type { PeriodoComAulas } from "@/repositories/periodos";
 
 type NovaAula = {
   numero_aula: number;

@@ -1,4 +1,4 @@
-import { getPeriodosComAulas } from "@/lib/supabase/queries/periodos";
+import { getPeriodosComAulas } from "@/repositories/periodos";
 import { PeriodosClient } from "@/components/periodos/periodos-client";
 
 export default async function PeriodosPage() {

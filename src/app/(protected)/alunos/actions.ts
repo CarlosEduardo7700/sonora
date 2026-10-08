@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import type { AlunoNaListagem } from "@/lib/supabase/queries/matriculas";
+import type { AlunoNaListagem } from "@/repositories/matriculas";
 
 export async function createAlunoComMatricula(
   nome: string,

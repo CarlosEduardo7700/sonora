@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
-import { getAlunoById } from "@/lib/supabase/queries/alunos";
+import { getAlunoById } from "@/repositories/alunos";
 import {
   getMatriculaDetalhe,
   getMatriculasDoAluno,
-} from "@/lib/supabase/queries/matriculas";
-import { getPeriodos } from "@/lib/supabase/queries/periodos";
+} from "@/repositories/matriculas";
+import { getPeriodos } from "@/repositories/periodos";
 import { AlunoDetalheClient } from "@/components/alunos/aluno-detalhe-client";
 
 export default async function AlunoDetalhePage({

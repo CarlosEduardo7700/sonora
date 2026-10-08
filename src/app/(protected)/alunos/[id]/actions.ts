@@ -8,7 +8,7 @@ import {
   getMatriculasDoAluno,
   type MatriculaDetalhe,
   type MatriculaDoAluno,
-} from "@/lib/supabase/queries/matriculas";
+} from "@/repositories/matriculas";
 
 export async function adicionarPeriodoAoAluno(
   alunoId: string,
