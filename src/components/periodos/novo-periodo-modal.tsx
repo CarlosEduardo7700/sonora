@@ -16,8 +16,20 @@ type NovoPeriodoModalProps = {
   onCreated: (periodo: PeriodoComAulas) => void;
 };
 
-const inputClassName =
-  "rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none";
+const styles = {
+  form: "flex flex-col gap-4",
+  label: "flex flex-col gap-1 text-sm font-medium text-foreground",
+  buttonsContainer: "mt-2 flex justify-end gap-2",
+  cancelButton:
+    "rounded-full border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary",
+  input: "rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none",
+  submitButton:
+    "rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover",
+  error: "text-sm text-red-600",
+  aulasContainer: "flex max-h-80 flex-col gap-3 overflow-y-auto pr-1",
+  aulaLabel: "flex items-center gap-3 text-sm font-medium text-foreground",
+  aulaNumero: "flex h-8 w-16 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground",
+};
 
 export function NovoPeriodoModal({
   open,
@@ -93,8 +105,10 @@ export function NovoPeriodoModal({
       title={etapa === "dados" ? "Novo Período" : `Aulas de "${nomePeriodo}"`}
     >
       {etapa === "dados" ? (
-        <form onSubmit={handleContinuar} className="flex flex-col gap-4">
-          <label className="flex flex-col gap-1 text-sm font-medium text-foreground">
+
+        <form onSubmit={handleContinuar} className={styles.form}>
+
+          <label className={styles.label}>
             Quantas aulas deseja cadastrar?
             <input
               type="number"
@@ -102,45 +116,53 @@ export function NovoPeriodoModal({
               value={quantidadeAulas}
               onChange={(event) => setQuantidadeAulas(event.target.value)}
               required
-              className={inputClassName}
+              className={styles.input}
             />
           </label>
-          <label className="flex flex-col gap-1 text-sm font-medium text-foreground">
+
+          <label className={styles.label}>
             Para qual período?
             <input
               type="text"
-              placeholder="Ex: MSA: Módulo 1 ao 3"
+              placeholder="Ex: MSA: Fase 1 ao 3"
               value={nomePeriodo}
               onChange={(event) => setNomePeriodo(event.target.value)}
               required
-              className={inputClassName}
+              className={styles.input}
             />
           </label>
-          <div className="mt-2 flex justify-end gap-2">
+
+          <div className={styles.buttonsContainer}>
+
             <button
               type="button"
               onClick={resetAndClose}
-              className="rounded-full border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+              className={styles.cancelButton}
             >
               Cancelar
             </button>
+
             <button
               type="submit"
-              className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
+              className={styles.submitButton}
             >
               Continuar
             </button>
+
           </div>
         </form>
+
       ) : (
-        <form onSubmit={handleSalvar} className="flex flex-col gap-4">
-          <div className="flex max-h-80 flex-col gap-3 overflow-y-auto pr-1">
+
+        <form onSubmit={handleSalvar} className={styles.form}>
+
+          <div className={styles.aulasContainer}>
             {rascunhoAulas.map((aula) => (
               <label
                 key={aula.numeroAula}
-                className="flex items-center gap-3 text-sm font-medium text-foreground"
+                className={styles.aulaLabel}
               >
-                <span className="flex h-8 w-16 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+                <span className={styles.aulaNumero}>
                   Aula {aula.numeroAula}
                 </span>
                 <input
@@ -151,29 +173,36 @@ export function NovoPeriodoModal({
                     handleTemaChange(aula.numeroAula, event.target.value)
                   }
                   required
-                  className={`flex-1 ${inputClassName}`}
+                  className={`${styles.input} flex-1`}
                 />
               </label>
             ))}
           </div>
-          {erro && <p className="text-sm text-red-600">{erro}</p>}
-          <div className="mt-2 flex justify-end gap-2">
+
+          {erro && <p className={styles.error}>{erro}</p>}
+
+          <div className={styles.buttonsContainer}>
+
             <button
               type="button"
               onClick={resetAndClose}
-              className="rounded-full border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+              className={styles.cancelButton}
             >
               Cancelar
             </button>
+
             <button
               type="submit"
               disabled={enviando}
-              className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60"
+              className={styles.submitButton}
             >
               {enviando ? "Salvando..." : "Salvar"}
             </button>
+
           </div>
+
         </form>
+
       )}
     </Modal>
   );
