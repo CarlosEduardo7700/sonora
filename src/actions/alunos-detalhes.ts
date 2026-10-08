@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { getAlunoById, type Aluno } from "@/repositories/alunos";
 import {
   createMatriculaComAulas,
   getMatriculaDetalhe,
@@ -9,6 +10,23 @@ import {
   type MatriculaDetalhe,
   type MatriculaDoAluno,
 } from "@/repositories/matriculas";
+
+export async function carregarAlunoDetalhe(alunoId: string): Promise<{
+  aluno: Aluno;
+  matricula: MatriculaDetalhe | null;
+  periodosDoAluno: MatriculaDoAluno[];
+} | null> {
+  const aluno = await getAlunoById(alunoId);
+  if (!aluno) return null;
+
+  const periodosDoAluno = await getMatriculasDoAluno(aluno.id);
+
+  // Lista ordenada por nome; o último é o período atual.
+  const atual = periodosDoAluno.at(-1);
+  const matricula = atual ? await getMatriculaDetalhe(atual.matriculaId) : null;
+
+  return { aluno, matricula, periodosDoAluno };
+}
 
 export async function adicionarPeriodoAoAluno(
   alunoId: string,

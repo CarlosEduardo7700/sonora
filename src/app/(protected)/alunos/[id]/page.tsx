@@ -1,36 +1,313 @@
-import { notFound } from "next/navigation";
-import { getAlunoById } from "@/repositories/alunos";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import Link from "next/link";
 import {
-  getMatriculaDetalhe,
-  getMatriculasDoAluno,
+  adicionarPeriodoAoAluno,
+  atualizarConclusaoAula,
+  atualizarNota,
+  carregarAlunoDetalhe,
+  trocarPeriodoMatricula,
+} from "@/actions/alunos-detalhes";
+import { listarPeriodos } from "@/actions/periodos";
+import type { Aluno } from "@/repositories/alunos";
+import type {
+  AulaDaMatricula,
+  MatriculaDetalhe,
+  MatriculaDoAluno,
 } from "@/repositories/matriculas";
-import { getPeriodos } from "@/repositories/periodos";
-import { AlunoDetalheClient } from "@/components/alunos/aluno-detalhe-client";
+import type { Periodo } from "@/repositories/periodos";
+import { PeriodoSwitcher } from "@/components/alunos/periodo-switcher";
+import { ProgressBar } from "@/components/ui/progress-bar";
+import { ConfirmarAulaModal } from "@/components/alunos/confirmar-aula-modal";
+import { NovoPeriodoAlunoModal } from "@/components/alunos/novo-periodo-aluno-modal";
+import { AulaCheckCard } from "@/components/alunos/aula-check-card";
 
-export default async function AlunoDetalhePage({
-  params,
-}: PageProps<"/alunos/[id]">) {
-  const { id } = await params;
-  const aluno = await getAlunoById(id);
+const styles = {
+  main: "mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-12 sm:px-8",
+};
 
-  if (!aluno) notFound();
+export default function AlunoDetalhePage() {
+  const { id } = useParams<{ id: string }>();
 
-  const [periodosDoAluno, todosPeriodos] = await Promise.all([
-    getMatriculasDoAluno(aluno.id),
-    getPeriodos(),
-  ]);
+  const [aluno, setAluno] = useState<Aluno | null>(null);
+  const [carregando, setCarregando] = useState(true);
+  const [todosPeriodos, setTodosPeriodos] = useState<Periodo[]>([]);
+  const [matricula, setMatricula] = useState<MatriculaDetalhe | null>(null);
+  const [periodosDoAluno, setPeriodosDoAluno] = useState<MatriculaDoAluno[]>(
+    []
+  );
+  const [modalPeriodoAberto, setModalPeriodoAberto] = useState(false);
+  const [erroModal, setErroModal] = useState<string | null>(null);
+  const [aulaSelecionada, setAulaSelecionada] =
+    useState<AulaDaMatricula | null>(null);
+  const [notaDraft, setNotaDraft] = useState("");
+  const [salvandoAula, setSalvandoAula] = useState(false);
+  const [salvandoNota, setSalvandoNota] = useState(false);
+  const [trocandoPeriodo, setTrocandoPeriodo] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
 
-  // Lista ordenada por nome; o último é o período atual.
-  const atual = periodosDoAluno.at(-1);
-  const matricula = atual ? await getMatriculaDetalhe(atual.matriculaId) : null;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    Promise.all([carregarAlunoDetalhe(id), listarPeriodos()]).then(
+      ([detalhe, periodos]) => {
+        if (!isMounted) return;
+        if (detalhe) {
+          setAluno(detalhe.aluno);
+          setMatricula(detalhe.matricula);
+          setPeriodosDoAluno(detalhe.periodosDoAluno);
+          setNotaDraft(
+            detalhe.matricula?.nota != null ? String(detalhe.matricula.nota) : ""
+          );
+        }
+        setTodosPeriodos(periodos);
+        setCarregando(false);
+      }
+    );
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
+
+  const aulas = matricula?.aulas ?? [];
+  const totalAulas = aulas.length;
+  const aulasConcluidas = aulas.filter((aula) => aula.concluida).length;
+  const percentual =
+    totalAulas > 0 ? Math.round((aulasConcluidas / totalAulas) * 100) : 0;
+
+  async function handleTrocarPeriodo(matriculaId: string) {
+    if (!aluno || matriculaId === matricula?.matriculaId) return;
+
+    setTrocandoPeriodo(true);
+    setErro(null);
+    try {
+      const novaMatricula = await trocarPeriodoMatricula(
+        aluno.id,
+        matriculaId
+      );
+      setMatricula(novaMatricula);
+      setNotaDraft(
+        novaMatricula.nota !== null ? String(novaMatricula.nota) : ""
+      );
+    } catch (error) {
+      setErro(
+        error instanceof Error ? error.message : "Erro ao trocar período"
+      );
+    } finally {
+      setTrocandoPeriodo(false);
+    }
+  }
+
+  const periodosNaoMatriculados = todosPeriodos.filter(
+    (periodo) => !periodosDoAluno.some((item) => item.periodoId === periodo.id)
+  );
+
+  function fecharModalPeriodo() {
+    setModalPeriodoAberto(false);
+    setErroModal(null);
+  }
+
+  async function handleAdicionarPeriodo(periodoId: string) {
+    if (!aluno) return;
+    setErroModal(null);
+    try {
+      const resultado = await adicionarPeriodoAoAluno(
+        aluno.id,
+        periodoId
+      );
+      setPeriodosDoAluno(resultado.periodosDoAluno);
+      setMatricula(resultado.matricula);
+      setNotaDraft(
+        resultado.matricula.nota !== null ? String(resultado.matricula.nota) : ""
+      );
+      setModalPeriodoAberto(false);
+    } catch (error) {
+      setErroModal(
+        error instanceof Error ? error.message : "Erro ao adicionar período"
+      );
+    }
+  }
+
+  async function handleConfirmar() {
+    if (!aulaSelecionada || !matricula) return;
+    const novoEstado = !aulaSelecionada.concluida;
+
+    setSalvandoAula(true);
+    setErro(null);
+    try {
+      await atualizarConclusaoAula(
+        aulaSelecionada.aulaMatriculaId,
+        novoEstado
+      );
+      setMatricula((prev) =>
+        prev && {
+          ...prev,
+          aulas: prev.aulas.map((aula) =>
+            aula.aulaId === aulaSelecionada.aulaId
+              ? { ...aula, concluida: novoEstado }
+              : aula
+          ),
+        }
+      );
+      setAulaSelecionada(null);
+    } catch (error) {
+      setErro(error instanceof Error ? error.message : "Erro ao atualizar aula");
+    } finally {
+      setSalvandoAula(false);
+    }
+  }
+
+  async function handleSalvarNota(event: React.FormEvent) {
+    event.preventDefault();
+    if (!matricula) return;
+    const valor = notaDraft.trim() === "" ? null : Number(notaDraft);
+    if (valor !== null && (Number.isNaN(valor) || valor < 0 || valor > 10)) {
+      return;
+    }
+
+    setSalvandoNota(true);
+    setErro(null);
+    try {
+      await atualizarNota(matricula.matriculaId, valor);
+      setMatricula((prev) => prev && { ...prev, nota: valor });
+    } catch (error) {
+      setErro(error instanceof Error ? error.message : "Erro ao salvar nota");
+    } finally {
+      setSalvandoNota(false);
+    }
+  }
+
+  if (carregando) {
+    return (
+      <main className={styles.main}>
+        <p className="text-sm text-muted-foreground">Carregando...</p>
+      </main>
+    );
+  }
+
+  if (!aluno) {
+    return (
+      <main className={styles.main}>
+        <p className="text-sm text-muted-foreground">Aluno não encontrado.</p>
+      </main>
+    );
+  }
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-12 sm:px-8">
-      <AlunoDetalheClient
-        aluno={aluno}
-        matricula={matricula}
-        periodosDoAluno={periodosDoAluno}
-        todosPeriodos={todosPeriodos}
+    <main className={styles.main}>
+      <Link
+        href="/alunos"
+        className="self-start text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+      >
+        ← Voltar para a listagem
+      </Link>
+
+      <div className="flex flex-col gap-1">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+          {aluno.nome}
+        </h1>
+        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+          <span>{aluno.instrumento}</span>
+          <span>·</span>
+          {matricula ? (
+            <PeriodoSwitcher
+              periodoAtual={matricula.nomePeriodo}
+              periodos={periodosDoAluno}
+              matriculaAtualId={matricula.matriculaId}
+              disabled={trocandoPeriodo}
+              onSelecionar={handleTrocarPeriodo}
+            />
+          ) : (
+            <span>Sem período</span>
+          )}
+          <button
+            type="button"
+            onClick={() => setModalPeriodoAberto(true)}
+            aria-label="Adicionar período"
+            className="flex h-6 w-6 items-center justify-center rounded-full border border-border bg-muted font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+          >
+            +
+          </button>
+        </div>
+      </div>
+
+      {matricula && (
+      <div
+        className={`flex flex-col gap-6 ${
+          trocandoPeriodo ? "pointer-events-none opacity-60" : ""
+        }`}
+      >
+        <ProgressBar
+          value={percentual}
+          label={`${aulasConcluidas} de ${totalAulas} aulas concluídas`}
+        />
+
+        {erro && <p className="text-sm text-red-600">{erro}</p>}
+
+        <form
+          onSubmit={handleSalvarNota}
+          className="flex flex-col gap-3 rounded-lg border border-border bg-card p-6 shadow-sm"
+        >
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-card-foreground">
+              Nota do período
+            </h2>
+            {matricula.nota !== null && (
+              <span className="rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-foreground">
+                {matricula.nota.toFixed(1)}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <input
+              type="number"
+              min={0}
+              max={10}
+              step={0.1}
+              placeholder="0.0 a 10.0"
+              value={notaDraft}
+              onChange={(event) => setNotaDraft(event.target.value)}
+              className="w-32 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+            />
+            <button
+              type="submit"
+              disabled={salvandoNota}
+              className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60"
+            >
+              {salvandoNota ? "Salvando..." : "Salvar nota"}
+            </button>
+          </div>
+        </form>
+
+        <div className="flex flex-col gap-3">
+          {aulas.map((aula) => (
+            <AulaCheckCard
+              key={aula.aulaId}
+              aula={aula}
+              onToggle={() => setAulaSelecionada(aula)}
+            />
+          ))}
+        </div>
+      </div>
+      )}
+
+      <NovoPeriodoAlunoModal
+        open={modalPeriodoAberto}
+        onClose={fecharModalPeriodo}
+        onConfirmar={handleAdicionarPeriodo}
+        periodosDisponiveis={periodosNaoMatriculados}
+        erro={erroModal}
+      />
+
+      <ConfirmarAulaModal
+        aula={aulaSelecionada}
+        salvando={salvandoAula}
+        onClose={() => setAulaSelecionada(null)}
+        onConfirmar={handleConfirmar}
       />
     </main>
   );
