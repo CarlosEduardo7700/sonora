@@ -3,6 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type { AlunoNaListagem } from "@/repositories/matriculas";
+import { getAlunosNaListagem } from "@/repositories/matriculas";
+
+export async function listarAlunosNaListagem(): Promise<AlunoNaListagem[]> {
+  return getAlunosNaListagem();
+}
 
 export async function createAlunoComMatricula(
   nome: string,

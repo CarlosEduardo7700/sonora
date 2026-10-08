@@ -13,8 +13,15 @@ type NovoAlunoModalProps = {
   periodosDisponiveis: Periodo[];
 };
 
-const inputClassName =
-  "rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none";
+const styles = {
+  input: "rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none",
+  form: "flex flex-col gap-4",
+  label: "flex flex-col gap-1 text-sm font-medium text-foreground",
+  error: "text-sm text-red-600",
+  buttonContainer: "mt-2 flex justify-end gap-2",
+  button: "rounded-full border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary",
+  submitButton: "rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60",
+}; 
 
 export function NovoAlunoModal({
   open,
@@ -59,34 +66,38 @@ export function NovoAlunoModal({
 
   return (
     <Modal open={open} onClose={resetAndClose} title="Novo Aluno">
-      <form onSubmit={handleSalvar} className="flex flex-col gap-4">
-        <label className="flex flex-col gap-1 text-sm font-medium text-foreground">
+
+      <form onSubmit={handleSalvar} className={styles.form}>
+
+        <label className={styles.label}>
           Nome
           <input
             type="text"
             value={nomeAluno}
             onChange={(event) => setNomeAluno(event.target.value)}
             required
-            className={inputClassName}
+            className={styles.input}
           />
         </label>
-        <label className="flex flex-col gap-1 text-sm font-medium text-foreground">
+
+        <label className={styles.label}>
           Instrumento
           <input
             type="text"
             value={instrumento}
             onChange={(event) => setInstrumento(event.target.value)}
             required
-            className={inputClassName}
+            className={styles.input}
           />
         </label>
-        <label className="flex flex-col gap-1 text-sm font-medium text-foreground">
+
+        <label className={styles.label}>
           Período
           <select
             value={periodoId}
             onChange={(event) => setPeriodoId(event.target.value)}
             required
-            className={inputClassName}
+            className={styles.input}
           >
             <option value="" disabled>
               Selecione um período
@@ -98,24 +109,31 @@ export function NovoAlunoModal({
             ))}
           </select>
         </label>
-        {erro && <p className="text-sm text-red-600">{erro}</p>}
-        <div className="mt-2 flex justify-end gap-2">
+
+        {erro && <p className={styles.error}>{erro}</p>}
+
+        <div className={styles.buttonContainer}>
+
           <button
             type="button"
             onClick={resetAndClose}
-            className="rounded-full border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+            className={styles.button}
           >
             Cancelar
           </button>
+
           <button
             type="submit"
             disabled={enviando}
-            className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60"
+            className={styles.submitButton}
           >
             {enviando ? "Salvando..." : "Salvar"}
           </button>
+
         </div>
+
       </form>
+
     </Modal>
   );
 }
