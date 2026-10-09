@@ -26,6 +26,20 @@ import { AulaCheckCard } from "@/components/alunos/aula-check-card";
 
 const styles = {
   main: "mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-12 sm:px-8",
+  alunoDetalheContainer: "flex flex-col gap-1",
+  erro: "text-sm text-red-600",
+  form: "flex flex-col gap-3 rounded-lg border border-border bg-card p-6 shadow-sm",
+  formRow: "flex items-center gap-3",
+  formHeader: "flex items-center justify-between",
+  aulasContainer: "flex flex-col gap-3",
+  formHeaderTitle: "text-lg font-semibold text-card-foreground",
+  formHeaderNota: "rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-foreground",
+  formInput: "w-32 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none",
+  formSubmitButton: "rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60",
+  alunoInfo: "flex items-center gap-1 text-sm text-muted-foreground",
+  addPeriodoButton: "flex h-6 w-6 items-center justify-center rounded-full border border-border bg-muted font-medium text-foreground transition-colors hover:border-primary hover:text-primary",
+  nomeAluno: "text-2xl font-semibold tracking-tight text-foreground",
+  backButton: "self-start text-sm font-medium text-muted-foreground transition-colors hover:text-primary",
 };
 
 export default function AlunoDetalhePage() {
@@ -201,18 +215,23 @@ export default function AlunoDetalhePage() {
     <main className={styles.main}>
       <Link
         href="/alunos"
-        className="self-start text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+        className={styles.backButton}
       >
         ← Voltar para a listagem
       </Link>
 
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+      <div className={styles.alunoDetalheContainer}>
+
+        <h1 className={styles.nomeAluno}>
           {aluno.nome}
         </h1>
-        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+
+        <div className={styles.alunoInfo}>
+
           <span>{aluno.instrumento}</span>
+
           <span>·</span>
+
           {matricula ? (
             <PeriodoSwitcher
               periodoAtual={matricula.nomePeriodo}
@@ -224,75 +243,89 @@ export default function AlunoDetalhePage() {
           ) : (
             <span>Sem período</span>
           )}
+
           <button
             type="button"
             onClick={() => setModalPeriodoAberto(true)}
             aria-label="Adicionar período"
-            className="flex h-6 w-6 items-center justify-center rounded-full border border-border bg-muted font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+            className={styles.addPeriodoButton}
           >
             +
           </button>
+
         </div>
+
       </div>
 
       {matricula && (
-      <div
-        className={`flex flex-col gap-6 ${
-          trocandoPeriodo ? "pointer-events-none opacity-60" : ""
-        }`}
-      >
-        <ProgressBar
-          value={percentual}
-          label={`${aulasConcluidas} de ${totalAulas} aulas concluídas`}
-        />
 
-        {erro && <p className="text-sm text-red-600">{erro}</p>}
-
-        <form
-          onSubmit={handleSalvarNota}
-          className="flex flex-col gap-3 rounded-lg border border-border bg-card p-6 shadow-sm"
+        <div
+          className={`flex flex-col gap-6 ${
+            trocandoPeriodo ? "pointer-events-none opacity-60" : ""
+          }`}
         >
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-card-foreground">
-              Nota do período
-            </h2>
-            {matricula.nota !== null && (
-              <span className="rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-foreground">
-                {matricula.nota.toFixed(1)}
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-3">
-            <input
-              type="number"
-              min={0}
-              max={10}
-              step={0.1}
-              placeholder="0.0 a 10.0"
-              value={notaDraft}
-              onChange={(event) => setNotaDraft(event.target.value)}
-              className="w-32 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
-            />
-            <button
-              type="submit"
-              disabled={salvandoNota}
-              className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60"
-            >
-              {salvandoNota ? "Salvando..." : "Salvar nota"}
-            </button>
-          </div>
-        </form>
+          <ProgressBar
+            value={percentual}
+            label={`${aulasConcluidas} de ${totalAulas} aulas concluídas`}
+          />
 
-        <div className="flex flex-col gap-3">
-          {aulas.map((aula) => (
-            <AulaCheckCard
-              key={aula.aulaId}
-              aula={aula}
-              onToggle={() => setAulaSelecionada(aula)}
-            />
-          ))}
+          {erro && <p className={styles.erro}>{erro}</p>}
+
+          <form
+            onSubmit={handleSalvarNota}
+            className={styles.form}
+          >
+
+            <div className={styles.formHeader}>
+
+              <h2 className={styles.formHeaderTitle}>
+                Nota do período
+              </h2>
+
+              {matricula.nota !== null && (
+                <span className={styles.formHeaderNota}>
+                  {matricula.nota.toFixed(1)}
+                </span>
+              )}
+
+            </div>
+
+            <div className={styles.formRow}>
+
+              <input
+                type="number"
+                min={0}
+                max={10}
+                step={0.1}
+                placeholder="0.0 a 10.0"
+                value={notaDraft}
+                onChange={(event) => setNotaDraft(event.target.value)}
+                className={styles.formInput}
+              />
+
+              <button
+                type="submit"
+                disabled={salvandoNota}
+                className={styles.formSubmitButton}
+              >
+                {salvandoNota ? "Salvando..." : "Salvar nota"}
+              </button>
+
+            </div>
+
+          </form>
+
+          <div className={styles.aulasContainer}>
+            {aulas.map((aula) => (
+              <AulaCheckCard
+                key={aula.aulaId}
+                aula={aula}
+                onToggle={() => setAulaSelecionada(aula)}
+              />
+            ))}
+          </div>
+          
         </div>
-      </div>
       )}
 
       <NovoPeriodoAlunoModal
