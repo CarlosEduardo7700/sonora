@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   adicionarPeriodoAoAluno,
@@ -64,6 +64,11 @@ export function AlunoDetalheClient({
   const [salvandoNota, setSalvandoNota] = useState(false);
   const [trocandoPeriodo, setTrocandoPeriodo] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const cacheMatriculas = useRef(new Map<string, MatriculaDetalhe>());
+
+  useEffect(() => {
+    if (matricula) cacheMatriculas.current.set(matricula.matriculaId, matricula);
+  }, [matricula]);
 
   const aulas = matricula?.aulas ?? [];
   const totalAulas = aulas.length;
@@ -73,6 +78,13 @@ export function AlunoDetalheClient({
 
   async function handleTrocarPeriodo(matriculaId: string) {
     if (matriculaId === matricula?.matriculaId) return;
+
+    const emCache = cacheMatriculas.current.get(matriculaId);
+    if (emCache) {
+      setMatricula(emCache);
+      setNotaDraft(emCache.nota !== null ? String(emCache.nota) : "");
+      return;
+    }
 
     setTrocandoPeriodo(true);
     setErro(null);

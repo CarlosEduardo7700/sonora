@@ -55,40 +55,87 @@ export async function getMatriculas(): Promise<Matricula[]> {
   return data;
 }
 
-export async function getAlunosNaListagem(): Promise<
-  AlunoNaListagem[]
-> {
+export async function getAlunosNaListagem(): Promise<AlunoNaListagem[]> {
   const supabase = await createClient();
+
   const [matriculas, alunos, periodos, checksResult] = await Promise.all([
     getMatriculas(),
     getAlunos(),
     getPeriodos(),
-    supabase.from("aula_matricula").select("matricula_id, concluida"),
+    supabase
+      .from("aula_matricula")
+      .select("matricula_id, concluida"),
   ]);
 
   if (checksResult.error) {
     throw new Error(checksResult.error.message);
   }
 
-  const checks = checksResult.data;
-  const periodosPorId = new Map(
-    periodos.map((periodo) => [periodo.id, periodo])
+  const periodoNomePorId = new Map(
+    periodos.map((periodo) => [periodo.id, periodo.nome])
   );
 
-  return alunos.map((aluno) => {
-    // Sem data no schema, o período "atual" é o de maior nome.
-    const atual = matriculas
-      .filter((matricula) => matricula.aluno_id === aluno.id)
-      .map((matricula) => ({
-        matricula,
-        nomePeriodo: periodosPorId.get(matricula.periodo_id)?.nome ?? "-",
-      }))
-      .sort((a, b) => a.nomePeriodo.localeCompare(b.nomePeriodo))
-      .at(-1);
+  // Agrupa as matrículas por aluno.
+  const matriculasPorAluno = new Map<
+    string,
+    { matricula: Matricula; nomePeriodo: string }[]
+  >();
 
-    const checksDaMatricula = atual
-      ? checks.filter((check) => check.matricula_id === atual.matricula.id)
-      : [];
+  for (const matricula of matriculas) {
+    const nomePeriodo =
+      periodoNomePorId.get(matricula.periodo_id) ?? "-";
+
+    const lista = matriculasPorAluno.get(matricula.aluno_id) ?? [];
+
+    lista.push({ matricula, nomePeriodo });
+    matriculasPorAluno.set(matricula.aluno_id, lista);
+  }
+
+  // Identifica a matrícula do período atual de cada aluno.
+  const matriculaAtualPorAluno = new Map<
+    string,
+    { matricula: Matricula; nomePeriodo: string }
+  >();
+
+  for (const [alunoId, lista] of matriculasPorAluno) {
+    lista.sort((a, b) =>
+      a.nomePeriodo.localeCompare(b.nomePeriodo)
+    );
+
+    const atual = lista.at(-1);
+
+    if (atual) {
+      matriculaAtualPorAluno.set(alunoId, atual);
+    }
+  }
+
+  // Calcula o total de aulas e as concluídas por matrícula.
+  const checksPorMatricula = new Map<
+    string,
+    { total: number; concluidas: number }
+  >();
+
+  for (const check of checksResult.data) {
+    const contagem = checksPorMatricula.get(check.matricula_id) ?? {
+      total: 0,
+      concluidas: 0,
+    };
+
+    contagem.total++;
+
+    if (check.concluida) {
+      contagem.concluidas++;
+    }
+
+    checksPorMatricula.set(check.matricula_id, contagem);
+  }
+
+  return alunos.map((aluno) => {
+    const atual = matriculaAtualPorAluno.get(aluno.id);
+
+    const contagem = atual
+      ? checksPorMatricula.get(atual.matricula.id)
+      : undefined;
 
     return {
       alunoId: aluno.id,
@@ -96,9 +143,8 @@ export async function getAlunosNaListagem(): Promise<
       instrumento: aluno.instrumento,
       nomePeriodo: atual?.nomePeriodo ?? null,
       nota: atual?.matricula.nota ?? null,
-      totalAulas: checksDaMatricula.length,
-      aulasConcluidas: checksDaMatricula.filter((check) => check.concluida)
-        .length,
+      totalAulas: contagem?.total ?? 0,
+      aulasConcluidas: contagem?.concluidas ?? 0,
     };
   });
 }
@@ -107,24 +153,20 @@ export async function getMatriculasDoAluno(
   alunoId: string
 ): Promise<MatriculaDoAluno[]> {
   const supabase = await createClient();
-  const [matriculasResult, periodos] = await Promise.all([
-    supabase.from("matriculas").select("*").eq("aluno_id", alunoId),
-    getPeriodos(),
-  ]);
+  const { data, error } = await supabase
+    .from("matriculas")
+    .select("id, periodo_id, periodos(nome)")
+    .eq("aluno_id", alunoId);
 
-  if (matriculasResult.error) {
-    throw new Error(matriculasResult.error.message);
+  if (error) {
+    throw new Error(error.message);
   }
 
-  const periodosPorId = new Map(
-    periodos.map((periodo) => [periodo.id, periodo])
-  );
-
-  return matriculasResult.data
+  return data
     .map((matricula) => ({
       matriculaId: matricula.id,
       periodoId: matricula.periodo_id,
-      nomePeriodo: periodosPorId.get(matricula.periodo_id)?.nome ?? "-",
+      nomePeriodo: matricula.periodos?.nome ?? "-",
     }))
     .sort((a, b) => a.nomePeriodo.localeCompare(b.nomePeriodo));
 }
@@ -194,66 +236,62 @@ export async function getMatriculaDetalhe(
   matriculaId: string
 ): Promise<MatriculaDetalhe | null> {
   const supabase = await createClient();
+
   const { data: matricula, error: matriculaError } = await supabase
     .from("matriculas")
-    .select("*")
+    .select("id, aluno_id, periodo_id, nota, alunos(nome, instrumento), periodos(nome)")
     .eq("id", matriculaId)
     .maybeSingle();
 
   if (matriculaError) {
     throw new Error(matriculaError.message);
   }
-  if (!matricula) {
+
+  if (!matricula || !matricula.alunos || !matricula.periodos) {
     return null;
   }
 
-  const [alunoResult, periodoResult, aulasResult, checksResult] =
-    await Promise.all([
-      supabase.from("alunos").select("*").eq("id", matricula.aluno_id).single(),
-      supabase
-        .from("periodos")
-        .select("*")
-        .eq("id", matricula.periodo_id)
-        .single(),
-      supabase
-        .from("aulas")
-        .select("*")
-        .eq("periodo_id", matricula.periodo_id)
-        .order("numero_aula"),
-      supabase
-        .from("aula_matricula")
-        .select("*")
-        .eq("matricula_id", matriculaId),
-    ]);
+  const [
+    { data: aulas, error: aulasError },
+    { data: checks, error: checksError },
+  ] = await Promise.all([
+    supabase
+      .from("aulas")
+      .select("id, numero_aula, tema")
+      .eq("periodo_id", matricula.periodo_id)
+      .order("numero_aula"),
 
-  if (alunoResult.error) throw new Error(alunoResult.error.message);
-  if (periodoResult.error) throw new Error(periodoResult.error.message);
-  if (aulasResult.error) throw new Error(aulasResult.error.message);
-  if (checksResult.error) throw new Error(checksResult.error.message);
+    supabase
+      .from("aula_matricula")
+      .select("id, aula_id, concluida")
+      .eq("matricula_id", matriculaId),
+  ]);
+
+  if (aulasError) throw new Error(aulasError.message);
+  if (checksError) throw new Error(checksError.message);
 
   const checksPorAulaId = new Map(
-    checksResult.data.map((check) => [check.aula_id, check])
+    checks.map((check) => [check.aula_id, check])
   );
-
-  const aulas: AulaDaMatricula[] = aulasResult.data.map((aula) => {
-    const check = checksPorAulaId.get(aula.id);
-    return {
-      aulaId: aula.id,
-      aulaMatriculaId: check?.id ?? "",
-      numeroAula: aula.numero_aula,
-      tema: aula.tema,
-      concluida: check?.concluida ?? false,
-    };
-  });
 
   return {
     matriculaId: matricula.id,
-    alunoId: alunoResult.data.id,
-    nomeAluno: alunoResult.data.nome,
-    instrumento: alunoResult.data.instrumento,
-    periodoId: periodoResult.data.id,
-    nomePeriodo: periodoResult.data.nome,
+    alunoId: matricula.aluno_id,
+    nomeAluno: matricula.alunos.nome,
+    instrumento: matricula.alunos.instrumento,
+    periodoId: matricula.periodo_id,
+    nomePeriodo: matricula.periodos.nome,
     nota: matricula.nota,
-    aulas,
+    aulas: aulas.map((aula) => {
+      const check = checksPorAulaId.get(aula.id);
+
+      return {
+        aulaId: aula.id,
+        aulaMatriculaId: check?.id ?? "",
+        numeroAula: aula.numero_aula,
+        tema: aula.tema,
+        concluida: check?.concluida ?? false,
+      };
+    }),
   };
 }

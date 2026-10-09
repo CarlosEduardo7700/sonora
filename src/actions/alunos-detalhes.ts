@@ -17,14 +17,17 @@ export async function carregarAlunoDetalhe(alunoId: string): Promise<{
   matricula: MatriculaDetalhe | null;
   periodosDoAluno: MatriculaDoAluno[];
 } | null> {
-  const aluno = await getAlunoById(alunoId);
+  const [aluno, periodosDoAluno] = await Promise.all([
+    getAlunoById(alunoId),
+    getMatriculasDoAluno(alunoId),
+  ]);
+
   if (!aluno) return null;
 
-  const periodosDoAluno = await getMatriculasDoAluno(aluno.id);
-
-  // Lista ordenada por nome; o último é o período atual.
   const atual = periodosDoAluno.at(-1);
-  const matricula = atual ? await getMatriculaDetalhe(atual.matriculaId) : null;
+  const matricula = atual
+    ? await getMatriculaDetalhe(atual.matriculaId)
+    : null;
 
   return { aluno, matricula, periodosDoAluno };
 }
@@ -91,7 +94,6 @@ export async function atualizarConclusaoAula(
 
   await setAulaConcluida(matriculaId, aulaId, concluida);
 
-  revalidatePath("/alunos/[id]", "page");
   revalidatePath("/alunos");
 }
 
@@ -106,6 +108,5 @@ export async function atualizarNota(matriculaId: string, nota: number | null) {
     throw new Error(error.message);
   }
 
-  revalidatePath("/alunos/[id]", "page");
   revalidatePath("/alunos");
 }
