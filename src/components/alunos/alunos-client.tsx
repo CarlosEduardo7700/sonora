@@ -1,10 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import type { AlunoNaListagem } from "@/lib/supabase/queries/matriculas";
-import type { Periodo } from "@/lib/supabase/queries/periodos";
-import { AlunoCard } from "@/components/aluno-card";
-import { NovoAlunoModal } from "@/components/novo-aluno-modal";
+import type { AlunoNaListagem } from "@/repositories/matriculas";
+import type { Periodo } from "@/repositories/periodos";
+import { AlunoCard } from "@/components/alunos/aluno-card";
+import { NovoAlunoModal } from "@/components/alunos/novo-aluno-modal";
+
+const styles = {
+  title: "text-2xl font-semibold tracking-tight text-foreground",
+  button: "rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover",
+  alunosContainer: "flex flex-col gap-4",
+  header: "flex items-center justify-between gap-4",
+};
 
 type AlunosClientProps = {
   alunosIniciais: AlunoNaListagem[];
@@ -20,23 +27,28 @@ export function AlunosClient({
 
   return (
     <>
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+      <div className={styles.header}>
+
+        <h1 className={styles.title}>
           Listagem dos Alunos
         </h1>
+
         <button
           type="button"
           onClick={() => setModalAberto(true)}
-          className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover"
+          className={styles.button}
         >
           Novo Aluno
         </button>
+
       </div>
 
-      <div className="flex flex-col gap-4">
+      <div className={styles.alunosContainer}>
+
         {alunos.map((aluno) => (
           <AlunoCard key={aluno.alunoId} aluno={aluno} />
         ))}
+
       </div>
 
       <NovoAlunoModal

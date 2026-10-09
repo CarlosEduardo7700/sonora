@@ -2,12 +2,21 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import type { PeriodoComAulas } from "@/lib/supabase/queries/periodos";
+import type { PeriodoComAulas } from "@/repositories/periodos";
+import { getPeriodosComAulas, getPeriodos } from "@/repositories/periodos";
 
 type NovaAula = {
   numero_aula: number;
   tema: string;
 };
+
+export async function listarPeriodos() {
+  return getPeriodos();
+}
+
+export async function listarPeriodosComAulas(): Promise<PeriodoComAulas[]> {
+  return getPeriodosComAulas();
+}
 
 export async function createPeriodoComAulas(
   nome: string,

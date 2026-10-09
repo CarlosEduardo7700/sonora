@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Modal } from "@/components/modal";
-import type { Periodo } from "@/lib/supabase/queries/periodos";
+import { Modal } from "@/components/ui/modal";
+import type { Periodo } from "@/repositories/periodos";
 
 type NovoPeriodoAlunoModalProps = {
   open: boolean;
@@ -10,6 +10,16 @@ type NovoPeriodoAlunoModalProps = {
   onConfirmar: (periodoId: string) => Promise<void>;
   periodosDisponiveis: Periodo[];
   erro: string | null;
+};
+
+const styles = {
+  container: "flex flex-col gap-4",
+  label: "flex flex-col gap-1 text-sm font-medium text-foreground",
+  select: "rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none",
+  error: "text-sm text-red-600",
+  buttonContainer: "flex justify-end gap-2",
+  button: "rounded-full border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary",
+  submitButton: "rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60",
 };
 
 export function NovoPeriodoAlunoModal({
@@ -37,30 +47,38 @@ export function NovoPeriodoAlunoModal({
 
   return (
     <Modal open={open} onClose={onClose} title="Adicionar período">
+
       {periodosDisponiveis.length === 0 ? (
-        <div className="flex flex-col gap-4">
-          <p className="text-sm text-muted-foreground">
+
+        <div className={styles.container}>
+
+          <p className={styles.error}>
             O aluno já está matriculado em todos os períodos cadastrados.
           </p>
-          <div className="flex justify-end">
+
+          <div className={styles.buttonContainer}>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+              className={styles.button}
             >
               Fechar
             </button>
           </div>
+
         </div>
+
       ) : (
-        <form onSubmit={handleSalvar} className="flex flex-col gap-4">
-          <label className="flex flex-col gap-1 text-sm font-medium text-foreground">
+
+        <form onSubmit={handleSalvar} className={styles.container}>
+
+          <label className={styles.label}>
             Período
             <select
               value={periodoId}
               onChange={(event) => setPeriodoId(event.target.value)}
               required
-              className="rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+              className={styles.select}
             >
               <option value="" disabled>
                 Selecione um período
@@ -72,24 +90,31 @@ export function NovoPeriodoAlunoModal({
               ))}
             </select>
           </label>
-          {erro && <p className="text-sm text-red-600">{erro}</p>}
-          <div className="flex justify-end gap-2">
+
+          {erro && <p className={styles.error}>{erro}</p>}
+
+          <div className={styles.buttonContainer}>
+
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+              className={styles.button}
             >
               Cancelar
             </button>
+
             <button
               type="submit"
               disabled={enviando}
-              className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60"
+              className={styles.submitButton}
             >
               {enviando ? "Salvando..." : "Adicionar"}
             </button>
+
           </div>
+          
         </form>
+
       )}
     </Modal>
   );

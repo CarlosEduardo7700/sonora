@@ -2,13 +2,35 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { getAlunoById, type Aluno } from "@/repositories/alunos";
 import {
   createMatriculaComAulas,
   getMatriculaDetalhe,
   getMatriculasDoAluno,
+  setAulaConcluida,
   type MatriculaDetalhe,
   type MatriculaDoAluno,
-} from "@/lib/supabase/queries/matriculas";
+} from "@/repositories/matriculas";
+
+export async function carregarAlunoDetalhe(alunoId: string): Promise<{
+  aluno: Aluno;
+  matricula: MatriculaDetalhe | null;
+  periodosDoAluno: MatriculaDoAluno[];
+} | null> {
+  const [aluno, periodosDoAluno] = await Promise.all([
+    getAlunoById(alunoId),
+    getMatriculasDoAluno(alunoId),
+  ]);
+
+  if (!aluno) return null;
+
+  const atual = periodosDoAluno.at(-1);
+  const matricula = atual
+    ? await getMatriculaDetalhe(atual.matriculaId)
+    : null;
+
+  return { aluno, matricula, periodosDoAluno };
+}
 
 export async function adicionarPeriodoAoAluno(
   alunoId: string,
@@ -62,20 +84,16 @@ export async function trocarPeriodoMatricula(
 }
 
 export async function atualizarConclusaoAula(
-  aulaMatriculaId: string,
+  matriculaId: string,
+  aulaId: string,
   concluida: boolean
 ) {
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("aula_matricula")
-    .update({ concluida })
-    .eq("id", aulaMatriculaId);
-
-  if (error) {
-    throw new Error(error.message);
+  if (!matriculaId || !aulaId) {
+    throw new Error("Matrícula e aula são obrigatórias");
   }
 
-  revalidatePath("/alunos/[id]", "page");
+  await setAulaConcluida(matriculaId, aulaId, concluida);
+
   revalidatePath("/alunos");
 }
 
@@ -90,6 +108,5 @@ export async function atualizarNota(matriculaId: string, nota: number | null) {
     throw new Error(error.message);
   }
 
-  revalidatePath("/alunos/[id]", "page");
   revalidatePath("/alunos");
 }

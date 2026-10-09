@@ -10,6 +10,12 @@ type ModalProps = {
   children: ReactNode;
 };
 
+const styles = {
+  overlay: "fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4",
+  modal: "w-full max-w-lg rounded-lg border border-border bg-card p-6 shadow-lg",
+  title: "mb-4 text-lg font-semibold text-card-foreground",
+};
+
 export function Modal({ open, onClose, title, children }: ModalProps) {
   useEffect(() => {
     if (!open) return;
@@ -26,18 +32,23 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      className={styles.overlay}
       onClick={onClose}
     >
+      
       <div
-        className="w-full max-w-lg rounded-lg border border-border bg-card p-6 shadow-lg"
+        className={styles.modal}
         onClick={(event) => event.stopPropagation()}
       >
-        <h2 className="mb-4 text-lg font-semibold text-card-foreground">
+
+        <h2 className={styles.title}>
           {title}
         </h2>
+
         {children}
+
       </div>
+
     </div>
   );
 }

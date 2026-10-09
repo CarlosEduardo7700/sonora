@@ -1,15 +1,19 @@
-import { getAlunosNaListagem } from "@/lib/supabase/queries/matriculas";
-import { getPeriodos } from "@/lib/supabase/queries/periodos";
-import { AlunosClient } from "@/components/alunos-client";
+import { listarAlunosNaListagem } from "@/actions/alunos";
+import { listarPeriodos } from "@/actions/periodos";
+import { AlunosClient } from "@/components/alunos/alunos-client";
+
+const styles = {
+  main: "mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-12 sm:px-8",
+};
 
 export default async function AlunosPage() {
   const [alunos, periodos] = await Promise.all([
-    getAlunosNaListagem(),
-    getPeriodos(),
+    listarAlunosNaListagem(),
+    listarPeriodos(),
   ]);
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-12 sm:px-8">
+    <main className={styles.main}>
       <AlunosClient alunosIniciais={alunos} periodosDisponiveis={periodos} />
     </main>
   );

@@ -1,25 +1,42 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import type {
-  AulaDaMatricula,
-  MatriculaDetalhe,
-  MatriculaDoAluno,
-} from "@/lib/supabase/queries/matriculas";
-import { ProgressBar } from "@/components/progress-bar";
-import { AulaCheckCard } from "@/components/aula-check-card";
-import { Modal } from "@/components/modal";
-import { PeriodoSwitcher } from "@/components/periodo-switcher";
-import { NovoPeriodoAlunoModal } from "@/components/novo-periodo-aluno-modal";
-import type { Periodo } from "@/lib/supabase/queries/periodos";
-import type { Aluno } from "@/lib/supabase/queries/alunos";
 import {
   adicionarPeriodoAoAluno,
   atualizarConclusaoAula,
   atualizarNota,
   trocarPeriodoMatricula,
-} from "@/app/(protected)/alunos/[id]/actions";
+} from "@/actions/alunos-detalhes";
+import type { Aluno } from "@/repositories/alunos";
+import type {
+  AulaDaMatricula,
+  MatriculaDetalhe,
+  MatriculaDoAluno,
+} from "@/repositories/matriculas";
+import type { Periodo } from "@/repositories/periodos";
+import { PeriodoSwitcher } from "@/components/alunos/periodo-switcher";
+import { ProgressBar } from "@/components/ui/progress-bar";
+import { ConfirmarAulaModal } from "@/components/alunos/confirmar-aula-modal";
+import { NovoPeriodoAlunoModal } from "@/components/alunos/novo-periodo-aluno-modal";
+import { AulaCheckCard } from "@/components/alunos/aula-check-card";
+
+const styles = {
+  alunoDetalheContainer: "flex flex-col gap-1",
+  erro: "text-sm text-red-600",
+  form: "flex flex-col gap-3 rounded-lg border border-border bg-card p-6 shadow-sm",
+  formRow: "flex items-center gap-3",
+  formHeader: "flex items-center justify-between",
+  aulasContainer: "flex flex-col gap-3",
+  formHeaderTitle: "text-lg font-semibold text-card-foreground",
+  formHeaderNota: "rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-foreground",
+  formInput: "w-32 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none",
+  formSubmitButton: "rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60",
+  alunoInfo: "flex items-center gap-1 text-sm text-muted-foreground",
+  addPeriodoButton: "flex h-6 w-6 items-center justify-center rounded-full border border-border bg-muted font-medium text-foreground transition-colors hover:border-primary hover:text-primary",
+  nomeAluno: "text-2xl font-semibold tracking-tight text-foreground",
+  backButton: "self-start text-sm font-medium text-muted-foreground transition-colors hover:text-primary",
+};
 
 type AlunoDetalheClientProps = {
   aluno: Aluno;
@@ -47,6 +64,11 @@ export function AlunoDetalheClient({
   const [salvandoNota, setSalvandoNota] = useState(false);
   const [trocandoPeriodo, setTrocandoPeriodo] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const cacheMatriculas = useRef(new Map<string, MatriculaDetalhe>());
+
+  useEffect(() => {
+    if (matricula) cacheMatriculas.current.set(matricula.matriculaId, matricula);
+  }, [matricula]);
 
   const aulas = matricula?.aulas ?? [];
   const totalAulas = aulas.length;
@@ -56,6 +78,13 @@ export function AlunoDetalheClient({
 
   async function handleTrocarPeriodo(matriculaId: string) {
     if (matriculaId === matricula?.matriculaId) return;
+
+    const emCache = cacheMatriculas.current.get(matriculaId);
+    if (emCache) {
+      setMatricula(emCache);
+      setNotaDraft(emCache.nota !== null ? String(emCache.nota) : "");
+      return;
+    }
 
     setTrocandoPeriodo(true);
     setErro(null);
@@ -114,7 +143,8 @@ export function AlunoDetalheClient({
     setErro(null);
     try {
       await atualizarConclusaoAula(
-        aulaSelecionada.aulaMatriculaId,
+        matricula.matriculaId,
+        aulaSelecionada.aulaId,
         novoEstado
       );
       setMatricula((prev) =>
@@ -159,18 +189,23 @@ export function AlunoDetalheClient({
     <>
       <Link
         href="/alunos"
-        className="self-start text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+        className={styles.backButton}
       >
         ← Voltar para a listagem
       </Link>
 
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+      <div className={styles.alunoDetalheContainer}>
+
+        <h1 className={styles.nomeAluno}>
           {aluno.nome}
         </h1>
-        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+
+        <div className={styles.alunoInfo}>
+
           <span>{aluno.instrumento}</span>
+
           <span>·</span>
+
           {matricula ? (
             <PeriodoSwitcher
               periodoAtual={matricula.nomePeriodo}
@@ -182,75 +217,89 @@ export function AlunoDetalheClient({
           ) : (
             <span>Sem período</span>
           )}
+
           <button
             type="button"
             onClick={() => setModalPeriodoAberto(true)}
             aria-label="Adicionar período"
-            className="flex h-6 w-6 items-center justify-center rounded-full border border-border bg-muted font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+            className={styles.addPeriodoButton}
           >
             +
           </button>
+
         </div>
+
       </div>
 
       {matricula && (
-      <div
-        className={`flex flex-col gap-6 ${
-          trocandoPeriodo ? "pointer-events-none opacity-60" : ""
-        }`}
-      >
-        <ProgressBar
-          value={percentual}
-          label={`${aulasConcluidas} de ${totalAulas} aulas concluídas`}
-        />
 
-        {erro && <p className="text-sm text-red-600">{erro}</p>}
-
-        <form
-          onSubmit={handleSalvarNota}
-          className="flex flex-col gap-3 rounded-lg border border-border bg-card p-6 shadow-sm"
+        <div
+          className={`flex flex-col gap-6 ${
+            trocandoPeriodo ? "pointer-events-none opacity-60" : ""
+          }`}
         >
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-card-foreground">
-              Nota do período
-            </h2>
-            {matricula.nota !== null && (
-              <span className="rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-foreground">
-                {matricula.nota.toFixed(1)}
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-3">
-            <input
-              type="number"
-              min={0}
-              max={10}
-              step={0.1}
-              placeholder="0.0 a 10.0"
-              value={notaDraft}
-              onChange={(event) => setNotaDraft(event.target.value)}
-              className="w-32 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
-            />
-            <button
-              type="submit"
-              disabled={salvandoNota}
-              className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60"
-            >
-              {salvandoNota ? "Salvando..." : "Salvar nota"}
-            </button>
-          </div>
-        </form>
+          <ProgressBar
+            value={percentual}
+            label={`${aulasConcluidas} de ${totalAulas} aulas concluídas`}
+          />
 
-        <div className="flex flex-col gap-3">
-          {aulas.map((aula) => (
-            <AulaCheckCard
-              key={aula.aulaId}
-              aula={aula}
-              onToggle={() => setAulaSelecionada(aula)}
-            />
-          ))}
+          {erro && <p className={styles.erro}>{erro}</p>}
+
+          <form
+            onSubmit={handleSalvarNota}
+            className={styles.form}
+          >
+
+            <div className={styles.formHeader}>
+
+              <h2 className={styles.formHeaderTitle}>
+                Nota do período
+              </h2>
+
+              {matricula.nota !== null && (
+                <span className={styles.formHeaderNota}>
+                  {matricula.nota.toFixed(1)}
+                </span>
+              )}
+
+            </div>
+
+            <div className={styles.formRow}>
+
+              <input
+                type="number"
+                min={0}
+                max={10}
+                step={0.1}
+                placeholder="0.0 a 10.0"
+                value={notaDraft}
+                onChange={(event) => setNotaDraft(event.target.value)}
+                className={styles.formInput}
+              />
+
+              <button
+                type="submit"
+                disabled={salvandoNota}
+                className={styles.formSubmitButton}
+              >
+                {salvandoNota ? "Salvando..." : "Salvar nota"}
+              </button>
+
+            </div>
+
+          </form>
+
+          <div className={styles.aulasContainer}>
+            {aulas.map((aula) => (
+              <AulaCheckCard
+                key={aula.aulaId}
+                aula={aula}
+                onToggle={() => setAulaSelecionada(aula)}
+              />
+            ))}
+          </div>
+
         </div>
-      </div>
       )}
 
       <NovoPeriodoAlunoModal
@@ -261,41 +310,12 @@ export function AlunoDetalheClient({
         erro={erroModal}
       />
 
-      <Modal
-        open={aulaSelecionada !== null}
+      <ConfirmarAulaModal
+        aula={aulaSelecionada}
+        salvando={salvandoAula}
         onClose={() => setAulaSelecionada(null)}
-        title={
-          aulaSelecionada?.concluida
-            ? "Remover check da aula?"
-            : "O aluno concluiu a aula?"
-        }
-      >
-        {aulaSelecionada && (
-          <div className="flex flex-col gap-4">
-            <p className="text-sm text-muted-foreground">
-              Aula {aulaSelecionada.numeroAula} · {aulaSelecionada.tema}
-            </p>
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setAulaSelecionada(null)}
-                className="rounded-full border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmar}
-                disabled={salvandoAula}
-                className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60"
-              >
-                {salvandoAula ? "Salvando..." : "Confirmar"}
-              </button>
-            </div>
-          </div>
-        )}
-      </Modal>
+        onConfirmar={handleConfirmar}
+      />
     </>
   );
 }
-

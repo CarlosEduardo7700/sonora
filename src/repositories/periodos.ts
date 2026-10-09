@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { getAulas, type Aula } from "@/lib/supabase/queries/aulas";
+import { getAulas, type Aula } from "@/repositories/aulas";
 
 export type Periodo = {
   id: string;
