@@ -172,6 +172,24 @@ export async function createMatriculaComAulas(
   return matricula;
 }
 
+export async function setAulaConcluida(
+  matriculaId: string,
+  aulaId: string,
+  concluida: boolean
+): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("aula_matricula")
+    .upsert(
+      { matricula_id: matriculaId, aula_id: aulaId, concluida },
+      { onConflict: "matricula_id,aula_id" }
+    );
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
 export async function getMatriculaDetalhe(
   matriculaId: string
 ): Promise<MatriculaDetalhe | null> {

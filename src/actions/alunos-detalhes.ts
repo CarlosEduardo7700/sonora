@@ -7,6 +7,7 @@ import {
   createMatriculaComAulas,
   getMatriculaDetalhe,
   getMatriculasDoAluno,
+  setAulaConcluida,
   type MatriculaDetalhe,
   type MatriculaDoAluno,
 } from "@/repositories/matriculas";
@@ -80,18 +81,15 @@ export async function trocarPeriodoMatricula(
 }
 
 export async function atualizarConclusaoAula(
-  aulaMatriculaId: string,
+  matriculaId: string,
+  aulaId: string,
   concluida: boolean
 ) {
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("aula_matricula")
-    .update({ concluida })
-    .eq("id", aulaMatriculaId);
-
-  if (error) {
-    throw new Error(error.message);
+  if (!matriculaId || !aulaId) {
+    throw new Error("Matrícula e aula são obrigatórias");
   }
+
+  await setAulaConcluida(matriculaId, aulaId, concluida);
 
   revalidatePath("/alunos/[id]", "page");
   revalidatePath("/alunos");

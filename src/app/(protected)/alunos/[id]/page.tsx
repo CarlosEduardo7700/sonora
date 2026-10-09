@@ -154,7 +154,8 @@ export default function AlunoDetalhePage() {
     setErro(null);
     try {
       await atualizarConclusaoAula(
-        aulaSelecionada.aulaMatriculaId,
+        matricula.matriculaId,
+        aulaSelecionada.aulaId,
         novoEstado
       );
       setMatricula((prev) =>
@@ -324,7 +325,7 @@ export default function AlunoDetalhePage() {
               />
             ))}
           </div>
-          
+
         </div>
       )}
 
