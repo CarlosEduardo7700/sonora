@@ -10,6 +10,14 @@ type ConfirmarAulaModalProps = {
   onConfirmar: () => void;
 };
 
+const styles = {
+  container: "flex flex-col gap-4",
+  text: "text-sm text-muted-foreground",
+  buttonContainer: "flex justify-end gap-2",
+  button: "rounded-full border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary",
+  submitButton: "rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60",
+};
+
 export function ConfirmarAulaModal({
   aula,
   salvando,
@@ -24,30 +32,40 @@ export function ConfirmarAulaModal({
         aula?.concluida ? "Remover check da aula?" : "O aluno concluiu a aula?"
       }
     >
+
       {aula && (
-        <div className="flex flex-col gap-4">
-          <p className="text-sm text-muted-foreground">
+
+        <div className={styles.container}>
+
+          <p className={styles.text}>
             Aula {aula.numeroAula} · {aula.tema}
           </p>
-          <div className="flex justify-end gap-2">
+
+          <div className={styles.buttonContainer}>
+
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+              className={styles.button}
             >
               Cancelar
             </button>
+
             <button
               type="button"
               onClick={onConfirmar}
               disabled={salvando}
-              className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-60"
+              className={styles.submitButton}
             >
               {salvando ? "Salvando..." : "Confirmar"}
             </button>
+
           </div>
+
         </div>
+
       )}
+      
     </Modal>
   );
 }
