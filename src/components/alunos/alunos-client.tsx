@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { AlunoNaListagem } from "@/repositories/matriculas";
-import type { Periodo } from "@/repositories/periodos";
+import type { Periodo } from "@/types/periodo";
 import { AlunoCard } from "@/components/alunos/aluno-card";
 import { NovoAlunoModal } from "@/components/alunos/novo-aluno-modal";
 

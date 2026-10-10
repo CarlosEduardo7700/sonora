@@ -14,7 +14,7 @@ import type {
   MatriculaDetalhe,
   MatriculaDoAluno,
 } from "@/repositories/matriculas";
-import type { Periodo } from "@/repositories/periodos";
+import type { Periodo } from "@/types/periodo";
 import { PeriodoSwitcher } from "@/components/alunos/periodo-switcher";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { ConfirmarAulaModal } from "@/components/alunos/confirmar-aula-modal";

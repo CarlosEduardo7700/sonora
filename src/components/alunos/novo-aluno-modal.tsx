@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Modal } from "@/components/ui/modal";
 import { createAlunoComMatricula } from "@/actions/alunos";
 import type { AlunoNaListagem } from "@/repositories/matriculas";
-import type { Periodo } from "@/repositories/periodos";
+import type { Periodo } from "@/types/periodo";
 
 type NovoAlunoModalProps = {
   open: boolean;
