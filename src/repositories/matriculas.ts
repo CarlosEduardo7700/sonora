@@ -20,16 +20,21 @@ export async function getMatriculas(): Promise<Matricula[]> {
 export async function getMatriculasDoAluno(
   alunoId: string
 ): Promise<MatriculaDoAluno[]> {
+  // Instância do Supabase
   const supabase = await createClient();
+
+  // Chamada ao Supabase
   const { data, error } = await supabase
     .from("matriculas")
     .select("id, periodo_id, periodos(nome)")
     .eq("aluno_id", alunoId);
-
+  
+  // Tratamento de erro
   if (error) {
     throw new Error(error.message);
   }
 
+  // Retorno dos dados
   return data
     .map((matricula) => ({
       matriculaId: matricula.id,
@@ -178,4 +183,18 @@ export async function getChecksAulas() {
   
   // Retorno dos dados
   return data;
+}
+
+export async function updateNota(matriculaId: string, nota: number) {
+  // Instância do Supabase
+  const supabase = await createClient();
+
+  // Chamada ao Supabase
+  const { error } = await supabase
+    .from("matriculas")
+    .update({ nota })
+    .eq("id", matriculaId);
+
+  // Tratamento de erro
+  if (error) throw new Error(error.message);
 }
