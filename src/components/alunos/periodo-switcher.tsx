@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { MatriculaDoAluno } from "@/repositories/matriculas";
+import type { MatriculaDoAluno } from "@/types/matricula";
 
 type PeriodoSwitcherProps = {
   periodoAtual: string;

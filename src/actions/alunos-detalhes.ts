@@ -2,15 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { getAlunoById, type Aluno } from "@/repositories/alunos";
+import { getAlunoById } from "@/repositories/alunos";
 import {
   createMatriculaComAulas,
   getMatriculaDetalhe,
   getMatriculasDoAluno,
   setAulaConcluida,
-  type MatriculaDetalhe,
-  type MatriculaDoAluno,
 } from "@/repositories/matriculas";
+import { Aluno } from "@/types/aluno";
+import { MatriculaDetalhe, MatriculaDoAluno } from "@/types/matricula";
 
 export async function carregarAlunoDetalhe(alunoId: string): Promise<{
   aluno: Aluno;

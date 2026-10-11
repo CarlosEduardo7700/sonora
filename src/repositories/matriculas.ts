@@ -1,152 +1,20 @@
 import { createClient } from "@/lib/supabase/server";
-import { getAlunos } from "@/repositories/alunos";
-import { getPeriodos } from "@/repositories/periodos";
-
-export type Matricula = {
-  id: string;
-  aluno_id: string;
-  periodo_id: string;
-  nota: number | null;
-};
-
-export type AulaDaMatricula = {
-  aulaId: string;
-  aulaMatriculaId: string;
-  numeroAula: number;
-  tema: string;
-  concluida: boolean;
-};
-
-export type MatriculaDetalhe = {
-  matriculaId: string;
-  alunoId: string;
-  nomeAluno: string;
-  instrumento: string;
-  periodoId: string;
-  nomePeriodo: string;
-  nota: number | null;
-  aulas: AulaDaMatricula[];
-};
-
-export type AlunoNaListagem = {
-  alunoId: string;
-  nomeAluno: string;
-  instrumento: string;
-  nomePeriodo: string | null;
-  nota: number | null;
-  totalAulas: number;
-  aulasConcluidas: number;
-};
-
-export type MatriculaDoAluno = {
-  matriculaId: string;
-  periodoId: string;
-  nomePeriodo: string;
-};
+import type { Matricula, MatriculaDoAluno, MatriculaDetalhe } from "@/types/matricula";
 
 export async function getMatriculas(): Promise<Matricula[]> {
+  // Instância do Supabase
   const supabase = await createClient();
+
+  // Chamada ao Supabase
   const { data, error } = await supabase.from("matriculas").select("*");
 
+  // Tratamento de erro
   if (error) {
     throw new Error(error.message);
   }
 
+  // Retorno dos dados
   return data;
-}
-
-export async function getAlunosNaListagem(): Promise<AlunoNaListagem[]> {
-  const supabase = await createClient();
-
-  const [matriculas, alunos, periodos, checksResult] = await Promise.all([
-    getMatriculas(),
-    getAlunos(),
-    getPeriodos(),
-    supabase
-      .from("aula_matricula")
-      .select("matricula_id, concluida"),
-  ]);
-
-  if (checksResult.error) {
-    throw new Error(checksResult.error.message);
-  }
-
-  const periodoNomePorId = new Map(
-    periodos.map((periodo) => [periodo.id, periodo.nome])
-  );
-
-  // Agrupa as matrículas por aluno.
-  const matriculasPorAluno = new Map<
-    string,
-    { matricula: Matricula; nomePeriodo: string }[]
-  >();
-
-  for (const matricula of matriculas) {
-    const nomePeriodo =
-      periodoNomePorId.get(matricula.periodo_id) ?? "-";
-
-    const lista = matriculasPorAluno.get(matricula.aluno_id) ?? [];
-
-    lista.push({ matricula, nomePeriodo });
-    matriculasPorAluno.set(matricula.aluno_id, lista);
-  }
-
-  // Identifica a matrícula do período atual de cada aluno.
-  const matriculaAtualPorAluno = new Map<
-    string,
-    { matricula: Matricula; nomePeriodo: string }
-  >();
-
-  for (const [alunoId, lista] of matriculasPorAluno) {
-    lista.sort((a, b) =>
-      a.nomePeriodo.localeCompare(b.nomePeriodo)
-    );
-
-    const atual = lista.at(-1);
-
-    if (atual) {
-      matriculaAtualPorAluno.set(alunoId, atual);
-    }
-  }
-
-  // Calcula o total de aulas e as concluídas por matrícula.
-  const checksPorMatricula = new Map<
-    string,
-    { total: number; concluidas: number }
-  >();
-
-  for (const check of checksResult.data) {
-    const contagem = checksPorMatricula.get(check.matricula_id) ?? {
-      total: 0,
-      concluidas: 0,
-    };
-
-    contagem.total++;
-
-    if (check.concluida) {
-      contagem.concluidas++;
-    }
-
-    checksPorMatricula.set(check.matricula_id, contagem);
-  }
-
-  return alunos.map((aluno) => {
-    const atual = matriculaAtualPorAluno.get(aluno.id);
-
-    const contagem = atual
-      ? checksPorMatricula.get(atual.matricula.id)
-      : undefined;
-
-    return {
-      alunoId: aluno.id,
-      nomeAluno: aluno.nome,
-      instrumento: aluno.instrumento,
-      nomePeriodo: atual?.nomePeriodo ?? null,
-      nota: atual?.matricula.nota ?? null,
-      totalAulas: contagem?.total ?? 0,
-      aulasConcluidas: contagem?.concluidas ?? 0,
-    };
-  });
 }
 
 export async function getMatriculasDoAluno(
@@ -294,4 +162,20 @@ export async function getMatriculaDetalhe(
       };
     }),
   };
+}
+
+export async function getChecksAulas() {
+  // Instância do Supabase
+  const supabase = await createClient();
+
+  // Chamada ao Supabase
+  const { data, error } = await supabase
+    .from("aula_matricula")
+    .select("matricula_id, concluida");
+
+  // Tratamento de erro
+  if (error) throw new Error(error.message);
+  
+  // Retorno dos dados
+  return data;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { Modal } from "@/components/ui/modal";
-import type { AulaDaMatricula } from "@/repositories/matriculas";
+import type { AulaDaMatricula } from "@/types/matricula";
 
 type ConfirmarAulaModalProps = {
   aula: AulaDaMatricula | null;

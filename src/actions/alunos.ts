@@ -1,94 +1,116 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
-import type { AlunoNaListagem } from "@/repositories/matriculas";
-import { getAlunosNaListagem } from "@/repositories/matriculas";
+import { getMatriculas, getChecksAulas } from "@/repositories/matriculas";
+import type { AlunoNaListagem, Matricula } from "@/types/matricula";
+import { getAlunos, createAlunoComMatricula } from "@/repositories/alunos";
+import { getPeriodos } from "@/repositories/periodos";
 
-export async function listarAlunosNaListagem(): Promise<AlunoNaListagem[]> {
-  return getAlunosNaListagem();
+export async function listarAlunos(): Promise<AlunoNaListagem[]> {
+  // Chamada ao repositório
+  const [matriculas, alunos, periodos, checks] = await Promise.all([
+    getMatriculas(),
+    getAlunos(),
+    getPeriodos(),
+    getChecksAulas(),
+  ]);
+
+  const periodoNomePorId = new Map(
+    periodos.map((periodo) => [periodo.id, periodo.nome])
+  );
+
+  const matriculasPorAluno = new Map<
+    string,
+    { matricula: Matricula; nomePeriodo: string }[]
+  >();
+
+  for (const matricula of matriculas) {
+    const nomePeriodo =
+      periodoNomePorId.get(matricula.periodo_id) ?? "-";
+
+    const lista = matriculasPorAluno.get(matricula.aluno_id) ?? [];
+
+    lista.push({ matricula, nomePeriodo });
+    matriculasPorAluno.set(matricula.aluno_id, lista);
+  }
+
+  const matriculaAtualPorAluno = new Map<
+    string,
+    { matricula: Matricula; nomePeriodo: string }
+  >();
+
+  for (const [alunoId, lista] of matriculasPorAluno) {
+    lista.sort((a, b) =>
+      a.nomePeriodo.localeCompare(b.nomePeriodo)
+    );
+
+    const atual = lista.at(-1);
+
+    if (atual) {
+      matriculaAtualPorAluno.set(alunoId, atual);
+    }
+  }
+
+  const checksPorMatricula = new Map<
+    string,
+    { total: number; concluidas: number }
+  >();
+
+  for (const check of checks) {
+    const contagem = checksPorMatricula.get(check.matricula_id) ?? {
+      total: 0,
+      concluidas: 0,
+    };
+
+    contagem.total++;
+
+    if (check.concluida) contagem.concluidas++;
+
+    checksPorMatricula.set(check.matricula_id, contagem);
+  }
+
+
+  // Retorno dos dados
+  return alunos.map((aluno) => {
+    const atual = matriculaAtualPorAluno.get(aluno.id);
+
+    const contagem = atual
+      ? checksPorMatricula.get(atual.matricula.id)
+      : undefined;
+
+    return {
+      alunoId: aluno.id,
+      nomeAluno: aluno.nome,
+      instrumento: aluno.instrumento,
+      nomePeriodo: atual?.nomePeriodo ?? null,
+      nota: atual?.matricula.nota ?? null,
+      totalAulas: contagem?.total ?? 0,
+      aulasConcluidas: contagem?.concluidas ?? 0,
+    };
+  });
 }
 
-export async function createAlunoComMatricula(
+export async function criarAlunoComMatricula(
   nome: string,
   instrumento: string,
   periodoId: string
 ): Promise<AlunoNaListagem> {
-  const supabase = await createClient();
+  // Validações
   const nomeTratado = nome.trim();
   const instrumentoTratado = instrumento.trim();
+
   if (!nomeTratado || !instrumentoTratado || !periodoId) {
     throw new Error("Nome, instrumento e período são obrigatórios");
   }
 
-  const { data: periodo, error: periodoError } = await supabase
-    .from("periodos")
-    .select("id, nome")
-    .eq("id", periodoId)
-    .single();
+  // Chamada ao repositório
+  const aluno = await createAlunoComMatricula(
+    nomeTratado,
+    instrumentoTratado,
+    periodoId
+  );
 
-  if (periodoError) {
-    throw new Error("Período inválido");
-  }
-
-  const { data: aluno, error: alunoError } = await supabase
-    .from("alunos")
-    .insert({ nome: nomeTratado, instrumento: instrumentoTratado })
-    .select()
-    .single();
-
-  if (alunoError) {
-    throw new Error(alunoError.message);
-  }
-
-  const { data: matricula, error: matriculaError } = await supabase
-    .from("matriculas")
-    .insert({ aluno_id: aluno.id, periodo_id: periodo.id })
-    .select()
-    .single();
-
-  if (matriculaError) {
-    await supabase.from("alunos").delete().eq("id", aluno.id);
-    throw new Error(matriculaError.message);
-  }
-
-  const { data: aulasDoPeriodo, error: aulasError } = await supabase
-    .from("aulas")
-    .select("id")
-    .eq("periodo_id", periodo.id);
-
-  if (aulasError) {
-    await supabase.from("matriculas").delete().eq("id", matricula.id);
-    await supabase.from("alunos").delete().eq("id", aluno.id);
-    throw new Error(aulasError.message);
-  }
-
-  if (aulasDoPeriodo.length > 0) {
-    const { error: checksError } = await supabase.from("aula_matricula").insert(
-      aulasDoPeriodo.map((aula) => ({
-        matricula_id: matricula.id,
-        aula_id: aula.id,
-        concluida: false,
-      }))
-    );
-
-    if (checksError) {
-      // desfaz matrícula e aluno se não conseguir criar os checks das aulas
-      await supabase.from("matriculas").delete().eq("id", matricula.id);
-      await supabase.from("alunos").delete().eq("id", aluno.id);
-      throw new Error(checksError.message);
-    }
-  }
-
+  // Retorno
   revalidatePath("/alunos");
-
-  return {
-    alunoId: aluno.id,
-    nomeAluno: aluno.nome,
-    instrumento: aluno.instrumento,
-    nomePeriodo: periodo.nome,
-    nota: matricula.nota,
-    totalAulas: aulasDoPeriodo.length,
-    aulasConcluidas: 0,
-  };
+  return aluno;
 }

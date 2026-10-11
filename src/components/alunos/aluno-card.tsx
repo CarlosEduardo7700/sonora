@@ -1,6 +1,6 @@
 import Link from "next/link";
-import type { AlunoNaListagem } from "@/repositories/matriculas";
 import { ProgressBar } from "@/components/ui/progress-bar";
+import { AlunoNaListagem } from "@/types/matricula";
 
 type AlunoCardProps = {
   aluno: AlunoNaListagem;

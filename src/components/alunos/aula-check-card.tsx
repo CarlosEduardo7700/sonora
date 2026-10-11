@@ -1,4 +1,4 @@
-import type { AulaDaMatricula } from "@/repositories/matriculas";
+import type { AulaDaMatricula } from "@/types/matricula";
 
 type AulaCheckCardProps = {
   aula: AulaDaMatricula;

@@ -1,5 +1,5 @@
-import { listarAlunosNaListagem } from "@/actions/alunos";
 import { listarPeriodos } from "@/actions/periodos";
+import { listarAlunos } from "@/actions/alunos";
 import { AlunosClient } from "@/components/alunos/alunos-client";
 
 const styles = {
@@ -8,7 +8,7 @@ const styles = {
 
 export default async function AlunosPage() {
   const [alunos, periodos] = await Promise.all([
-    listarAlunosNaListagem(),
+    listarAlunos(),
     listarPeriodos(),
   ]);
 

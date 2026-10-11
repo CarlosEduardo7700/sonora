@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import type { AlunoNaListagem } from "@/repositories/matriculas";
 import type { Periodo } from "@/types/periodo";
+import type { AlunoNaListagem } from "@/types/matricula";
 import { AlunoCard } from "@/components/alunos/aluno-card";
 import { NovoAlunoModal } from "@/components/alunos/novo-aluno-modal";
 
