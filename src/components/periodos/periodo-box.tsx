@@ -1,4 +1,6 @@
+import { useState } from "react";
 import type { PeriodoComAulas } from "@/types/periodo";
+import { ConfirmModal } from "../ui/confirm-modal";
 
 type PeriodoBoxProps = {
   periodo: PeriodoComAulas;
@@ -13,9 +15,12 @@ const styles = {
   aulaCard: "flex items-center gap-3 rounded-md border border-border bg-muted p-4",
   aulaNumero: "flex h-8 w-16 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground",
   aulaTema: "text-sm font-medium text-foreground",
+  deleteButton: "rounded-full bg-destructive px-3 py-1 text-xs font-medium text-destructive-foreground transition-colors hover:bg-destructive-hover",
 };
 
 export function PeriodoBox({ periodo }: PeriodoBoxProps) {
+  const [modalAberto, setModalAberto] = useState(false);
+  
   return (
 
     <div className={styles.container}>
@@ -25,9 +30,16 @@ export function PeriodoBox({ periodo }: PeriodoBoxProps) {
         <h2 className={styles.title}>
           {periodo.nome}
         </h2>
-        <span className={styles.badge}>
-          {periodo.aulas.length} {periodo.aulas.length === 1 ? "aula" : "aulas"}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className={styles.badge}>
+            {periodo.aulas.length} {periodo.aulas.length === 1 ? "aula" : "aulas"}
+          </span>
+          <button
+            type="button"
+            onClick={() => setModalAberto(true)}
+            className={styles.deleteButton}
+          >Excluir</button>
+        </div>
 
       </div>
 
@@ -52,6 +64,16 @@ export function PeriodoBox({ periodo }: PeriodoBoxProps) {
         ))}
 
       </div>
+
+      <ConfirmModal
+        open={modalAberto}
+        onClose={() => setModalAberto(false)}
+        onConfirm={() => {
+          setModalAberto(false);
+        }}
+        title="Confirmar exclusão"
+        description="Tem certeza de que deseja excluir este período?"
+      />
 
     </div>
   );
