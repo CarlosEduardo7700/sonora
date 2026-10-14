@@ -1,28 +1,35 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
-import type { PeriodoComAulas } from "@/repositories/periodos";
-import { getPeriodosComAulas, getPeriodos } from "@/repositories/periodos";
-
-type NovaAula = {
-  numero_aula: number;
-  tema: string;
-};
+import { getPeriodos, createPeriodoComAulas } from "@/repositories/periodos";
+import { getAulas } from "@/repositories/aulas";
+import type { PeriodoComAulas } from "@/types/periodo";
+import type { NovaAula } from "@/types/aula";
 
 export async function listarPeriodos() {
+  // Chamada ao repositório e retorno
   return getPeriodos();
 }
 
 export async function listarPeriodosComAulas(): Promise<PeriodoComAulas[]> {
-  return getPeriodosComAulas();
+  // Chamada ao repositório
+  const [periodos, aulas] = await Promise.all([
+    getPeriodos(), 
+    getAulas()
+  ]);
+
+  // Retorno
+  return periodos.map((periodo) => ({
+    ...periodo,
+    aulas: aulas.filter((aula) => aula.periodo_id === periodo.id),
+  }));
 }
 
-export async function createPeriodoComAulas(
+export async function criarPeriodoComAulas(
   nome: string,
   aulas: NovaAula[]
 ): Promise<PeriodoComAulas> {
-  const supabase = await createClient();
+  // Validações
   const nomeTratado = nome.trim();
   if (!nomeTratado) {
     throw new Error("Nome do período é obrigatório");
@@ -31,34 +38,16 @@ export async function createPeriodoComAulas(
     throw new Error("Todas as aulas precisam ter um tema");
   }
 
-  const { data: periodo, error: periodoError } = await supabase
-    .from("periodos")
-    .insert({ nome: nomeTratado })
-    .select()
-    .single();
+  // Chamada ao repositório
+  const periodo = await createPeriodoComAulas(
+    nomeTratado,
+    aulas.map((aula) => ({
+      ...aula,
+      tema: aula.tema.trim(),
+    }))
+  );
 
-  if (periodoError) {
-    throw new Error(periodoError.message);
-  }
-
-  const { data: aulasCriadas, error: aulasError } = await supabase
-    .from("aulas")
-    .insert(
-      aulas.map((aula) => ({
-        numero_aula: aula.numero_aula,
-        tema: aula.tema.trim(),
-        periodo_id: periodo.id,
-      }))
-    )
-    .select();
-
-  if (aulasError) {
-    // evita período órfão sem aulas quando a segunda inserção falha
-    await supabase.from("periodos").delete().eq("id", periodo.id);
-    throw new Error(aulasError.message);
-  }
-
+  // Retorno
   revalidatePath("/periodos");
-  return { ...periodo, aulas: aulasCriadas };
+  return periodo;
 }
-

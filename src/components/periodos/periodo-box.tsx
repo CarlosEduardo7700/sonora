@@ -1,4 +1,4 @@
-import type { PeriodoComAulas } from "@/repositories/periodos";
+import type { PeriodoComAulas } from "@/types/periodo";
 
 type PeriodoBoxProps = {
   periodo: PeriodoComAulas;

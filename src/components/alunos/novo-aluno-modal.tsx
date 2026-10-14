@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { Modal } from "@/components/ui/modal";
-import { createAlunoComMatricula } from "@/actions/alunos";
-import type { AlunoNaListagem } from "@/repositories/matriculas";
-import type { Periodo } from "@/repositories/periodos";
+import type { Periodo } from "@/types/periodo";
+import type { AlunoNaListagem } from "@/types/matricula";
+import { criarAlunoComMatricula } from "@/actions/alunos";
 
 type NovoAlunoModalProps = {
   open: boolean;
@@ -50,7 +50,7 @@ export function NovoAlunoModal({
     setEnviando(true);
     setErro(null);
     try {
-      const aluno = await createAlunoComMatricula(
+      const aluno = await criarAlunoComMatricula (
         nomeAluno,
         instrumento,
         periodoId

@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { Modal } from "@/components/ui/modal";
-import { createPeriodoComAulas } from "@/actions/periodos";
-import type { PeriodoComAulas } from "@/repositories/periodos";
+import type { PeriodoComAulas } from "@/types/periodo";
+import { criarPeriodoComAulas } from "@/actions/periodos";
 
 type RascunhoAula = {
   numeroAula: number;
@@ -80,7 +80,7 @@ export function NovoPeriodoModal({
     setEnviando(true);
     setErro(null);
     try {
-      const periodo = await createPeriodoComAulas(
+      const periodo = await criarPeriodoComAulas(
         nomePeriodo,
         rascunhoAulas.map((aula) => ({
           numero_aula: aula.numeroAula,

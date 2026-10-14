@@ -8,18 +8,14 @@ import {
   atualizarNota,
   trocarPeriodoMatricula,
 } from "@/actions/alunos-detalhes";
-import type { Aluno } from "@/repositories/alunos";
-import type {
-  AulaDaMatricula,
-  MatriculaDetalhe,
-  MatriculaDoAluno,
-} from "@/repositories/matriculas";
-import type { Periodo } from "@/repositories/periodos";
 import { PeriodoSwitcher } from "@/components/alunos/periodo-switcher";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { ConfirmarAulaModal } from "@/components/alunos/confirmar-aula-modal";
 import { NovoPeriodoAlunoModal } from "@/components/alunos/novo-periodo-aluno-modal";
 import { AulaCheckCard } from "@/components/alunos/aula-check-card";
+import { Aluno } from "@/types/aluno";
+import type { Periodo } from "@/types/periodo";
+import type { AulaDaMatricula, MatriculaDetalhe, MatriculaDoAluno } from "@/types/matricula";
 
 const styles = {
   alunoDetalheContainer: "flex flex-col gap-1",
